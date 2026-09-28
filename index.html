@@ -131,6 +131,7 @@
     }
   </style>
 
+  <!-- Nạp chat.js bất đồng bộ không chặn luồng DOM -->
   <script defer src="./chat.js"></script>
 </head>
 <body class="min-h-screen relative flex flex-col font-sans selection:bg-amber-500/20 selection:text-amber-200">
@@ -239,7 +240,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="soundCardContainer"></div>
     </section>
 
-    <!-- TAB 2: VIẾT & BUÔNG BỎ (LỬA CHÁY NGUYÊN BẢN BAN ĐẦU) -->
+    <!-- TAB 2: VIẾT & BUÔNG BỎ -->
     <section id="section-burner" class="hidden w-full flex-col items-center">
       <div class="w-full max-w-2xl glass-panel p-6 sm:p-8 rounded-3xl relative overflow-hidden flex flex-col gap-6">
         <canvas id="burnCanvas"></canvas>
@@ -360,7 +361,7 @@
         </button>
       </div>
 
-      <!-- Đốt giấy từ từ (Giữ nguyên gốc) -->
+      <!-- Đốt giấy -->
       <div id="game-paperBurn" class="w-full max-w-xl mx-auto flex flex-col items-center gap-5">
         <div class="w-full flex items-center justify-between text-xs text-slate-400 px-2">
           <span>Viết điều bạn muốn tan biến và xem nó cháy dần thành tro bụi</span>
@@ -464,7 +465,7 @@
               <h4 class="text-xs font-semibold text-slate-100">
                 Quán Trọ Đêm Mưa
               </h4>
-              <!-- Badge: 🟢 Gemini Active -->
+              <!-- Badge chuẩn: 🟢 Gemini Active -->
               <span id="aiEngineStatusBadge" title="Trạng thái Gemini AI qua chat.js" onclick="checkAiBackendStatus()" class="cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-emerald-500/20 border-emerald-400/40 text-emerald-300 hover:brightness-110 active:scale-95 shadow-sm shadow-emerald-950/40">
                 <span id="aiEngineStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span id="aiEngineStatusLabel">🟢 Gemini Active</span>
@@ -540,7 +541,7 @@
 
   <script>
     /* ==========================================================
-       1. CẤU HÌNH & XỬ LÝ CHAT QUA CHAT.JS (VỖ VỀ THEO TÊN NGƯỜI TAG)
+       1. CẤU HÌNH & XỬ LÝ CHAT QUA CHAT.JS (IOS SAFE)
        ========================================================== */
     let isGeminiReady = false;
     let userIsBrowsingHistory = false;
@@ -564,10 +565,9 @@
       avatarBg: 'bg-rose-500/20 text-rose-300 border border-rose-500/30',
       systemPrompt: `Bạn là "Chú Bọ Cute" - một chú bọ rùa nhỏ xíu xiu, vô cùng đáng yêu và ấm áp trong quán trọ đêm mưa.
 - BẮT BUỘC: Bạn LUÔN TRẢ LỜI BẰNG BÀI THƠ (thơ lục bát, thơ 4 chữ, hoặc thơ 5 chữ ngắn gọn từ 4-6 câu có xuống dòng).
-- BẮT BUỘC: Hãy gọi đích danh tên của người gửi (người tag bạn) vào trong câu thơ hoặc dòng đầu/cuối của bài thơ một cách thân mật và dịu dàng.
 - TUYỆT ĐỐI KHÔNG VIẾT VĂN XUÔI THÔNG THƯỜNG.
-- Nội dung thơ: Dịu dàng vỗ về, xoa má, trao gửi chiếc lá non đọng sương mai, nhắc người bạn ấy buông bớt âu lo, thả lỏng vai và an tâm ngủ ngon.
-- Giọng thơ: Ngọt ngào, trong trẻo, xưng "bọ" hoặc "tớ", gọi người dùng bằng tên của họ.`,
+- Nội dung thơ: Dịu dàng vỗ về, xoa má, trao gửi chiếc lá non đọng sương mai, nhắc người dùng buông bớt âu lo, thả lỏng vai và an tâm ngủ ngon.
+- Giọng thơ: Ngọt ngào, trong trẻo, xưng "bọ" hoặc "tớ", gọi người dùng là "bạn ơi".`,
       mentionPatterns: [
         '@chú bọ cute',
         '@chú bọ',
@@ -581,16 +581,12 @@
         'chú bọ cute',
         'bọ rùa ơi'
       ],
-      getFallbackPoem: function(targetName) {
-        const name = targetName || 'bạn ơi';
-        const poems = [
-          `🐞 Bọ mang chiếc lá non xanh,\nGửi trao ${name} chút an lành đêm nay.\nMuộn phiền theo gió nhẹ bay,\n${name} ơi chợp mắt ngủ say giấc nồng. ✨`,
-          `🐞 Đừng buồn chi nữa ${name} ơi,\nMưa đêm rồi cũng tạnh rơi bên thềm.\nĐắp chăn giữ ấm êm đềm,\nCó chú bọ nhỏ kề bên vỗ về. 🫂`,
-          `🐞 Ngoài trời giọt ngắn giọt dài,\nThương ${name} vất vả đường dài sớm hôm.\nBọ gửi một triệu cái ôm,\nXua tan mỏi mệt ngủ êm canh dài. 🌸`,
-          `🐞 Chú bọ cánh đỏ chấm đen,\nThắp cho ${name} ánh hoa đèn bình yên.\nTrút đi nặng trĩu ưu phiền,\nĐể lòng nhẹ nhõm về miền chiêm bao. 🌙`
-        ];
-        return poems[Math.floor(Math.random() * poems.length)];
-      }
+      fallbackPoems: [
+        `🐞 Bọ rùa mang lá non xanh,\nGửi trao bạn chút an lành đêm nay.\nMuộn phiền theo gió nhẹ bay,\nNhắm đôi mi lại ngủ say giấc nồng. ✨`,
+        `🐞 Đừng buồn chi nữa bạn ơi,\nMưa đêm rồi cũng tạnh rơi bên thềm.\nĐắp chăn giữ ấm êm đềm,\nCó chú bọ nhỏ vỗ mềm vết thương. 🫂`,
+        `🐞 Ngoài trời giọt ngắn giọt dài,\nThương bạn vất vả đường dài sớm hôm.\nBọ gửi một triệu cái ôm,\nXua tan mỏi mệt ngủ êm canh dài. 🌸`,
+        `🐞 Chú bọ cánh đỏ chấm đen,\nThắp lên cho bạn ánh đèn bình yên.\nTrút đi nặng trĩu ưu phiền,\nĐể lòng nhẹ nhõm về miền chiêm bao. 🌙`
+      ]
     };
 
     const DEFAULT_HISTORY = [
@@ -657,21 +653,21 @@
       }
     }
 
-    async function queryPoeticAI(userMessage, targetSender = 'Bạn') {
-      const promptText = `${BOT_BUG.systemPrompt}\n\nNgười gửi tâm sự là bạn: "${targetSender}".\nNội dung nhắn: "${userMessage}".\nHãy làm ngay một bài thơ vỗ về trực tiếp bạn "${targetSender}" (4-6 dòng thơ có xuống dòng, chỉ trả về bài thơ, không kèm văn xuôi dẫn nhập):`;
+    async function queryPoeticAI(userMessage) {
+      const promptText = `${BOT_BUG.systemPrompt}\n\nNgười dùng nhắn: "${userMessage}".\nHãy làm ngay một bài thơ vỗ về họ (4-6 dòng thơ có xuống dòng, chỉ trả về bài thơ, không văn xuôi):`;
 
       try {
         if (typeof window.queryPoeticAI === 'function') {
-          const res = await window.queryPoeticAI(userMessage, promptText, targetSender);
+          const res = await window.queryPoeticAI(userMessage, promptText);
           if (res) return cleanAiPoem(res);
         } else if (typeof window.generateChatReply === 'function') {
-          const res = await window.generateChatReply({ message: userMessage, prompt: promptText, sender: targetSender });
+          const res = await window.generateChatReply({ message: userMessage, prompt: promptText });
           if (res) return cleanAiPoem(res);
         } else if (typeof window.geminiChat === 'function') {
-          const res = await window.geminiChat(userMessage, promptText, targetSender);
+          const res = await window.geminiChat(userMessage, promptText);
           if (res) return cleanAiPoem(res);
         } else if (typeof window.chatHandler === 'function') {
-          const mockReq = { body: { message: userMessage, prompt: promptText, sender: targetSender } };
+          const mockReq = { body: { message: userMessage, prompt: promptText } };
           let resData = null;
           const mockRes = {
             status: () => mockRes,
@@ -706,7 +702,8 @@
         }
       } catch (err) {}
 
-      return BOT_BUG.getFallbackPoem(targetSender);
+      const poems = BOT_BUG.fallbackPoems;
+      return poems[Math.floor(Math.random() * poems.length)];
     }
 
     function cleanAiPoem(raw) {
@@ -716,6 +713,7 @@
         .trim();
     }
 
+    // Polyfill an toàn cho BroadcastChannel trên iOS Safari cũ
     let LOCAL_BROADCAST = null;
     try {
       if (typeof BroadcastChannel !== 'undefined') {
@@ -840,14 +838,6 @@
 
       playMessageArrivalChime();
       showUnreadBadge();
-
-      // Nếu người khác tag Chú Bọ từ thiết bị khác, bot sẽ tự động nhận diện và làm thơ vỗ về người đó
-      if (!msg.isBot && isBotMentioned(msg.text)) {
-        if (!msg.botHandled) {
-          msg.botHandled = true;
-          processBotAiResponse(msg.text, msg.sender);
-        }
-      }
     }
 
     function broadcastChatMessage(msg) {
@@ -1034,7 +1024,7 @@
     }
 
     function escapeHTML(str) {
-      return str.replace(/[&<>'"]/g, 
+      return String(str).replace(/[&<>'"]/g, 
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
       );
     }
@@ -1060,7 +1050,7 @@
     function handleSendChatMessage(e) {
       e.preventDefault();
       const input = document.getElementById('chatMessageInput');
-      const text = input ? input.value.trim() : '';
+      const text = input.value.trim();
       if (!text) return;
 
       const userMsg = {
@@ -1073,11 +1063,10 @@
       };
 
       broadcastChatMessage(userMsg);
-      if (input) input.value = '';
+      input.value = '';
 
-      // Tự động chuyển text và nickname để bot trả lời đích danh
       if (isBotMentioned(text)) {
-        processBotAiResponse(text, myNickname);
+        processBotAiResponse(text);
       }
     }
 
@@ -1086,25 +1075,16 @@
       return BOT_BUG.mentionPatterns.some(pattern => lower.indexOf(pattern) !== -1);
     }
 
-    async function processBotAiResponse(userText, targetSenderName) {
-      const sender = targetSenderName || myNickname || 'Bạn';
-      showTypingIndicator(BOT_BUG.name, sender);
-
-      // Gọi hàm Gemini từ chat.js
-      let poeticReply = "";
-      if (typeof window.queryPoeticAI === 'function') {
-        poeticReply = await window.queryPoeticAI(userText, BOT_BUG.systemPrompt, sender);
-      } else {
-        poeticReply = BOT_BUG.getFallbackPoem(sender);
-      }
-      
+    async function processBotAiResponse(userText) {
+      showTypingIndicator(BOT_BUG.name);
+      const poeticReply = await queryPoeticAI(userText);
       hideTypingIndicator();
 
       const botReplyMsg = {
         id: 'bot_reply_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
         sender: BOT_BUG.name,
         badge: BOT_BUG.badge,
-        text: `@${sender}\n${poeticReply}`, // Luôn tag tên người hỏi ở đầu tin nhắn
+        text: poeticReply,
         time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
         isBot: true
       };
@@ -1114,11 +1094,11 @@
       showUnreadBadge();
     }
 
-    function showTypingIndicator(botName, targetName) {
+    function showTypingIndicator(botName) {
       const indicator = document.getElementById('chatTypingIndicator');
       const nameEl = document.getElementById('typingBotName');
       if (indicator && nameEl) {
-        nameEl.innerText = `${botName} đang làm thơ vỗ về ${targetName || 'bạn'}...`;
+        nameEl.innerText = `${botName} đang gieo vần thơ vỗ về...`;
         indicator.classList.remove('hidden');
         indicator.classList.add('flex');
       }
@@ -1133,7 +1113,7 @@
     }
 
     /* ==========================================================
-       2. PROCEDURAL WEB AUDIO SYNTHESIZER
+       2. PROCEDURAL WEB AUDIO SYNTHESIZER (IOS SAFARI SAFE)
        ========================================================== */
     let audioCtx = null;
     let masterGain = null;
@@ -1143,7 +1123,7 @@
       { id: 'rain', name: 'Mưa Rơi Mái Hiên', icon: 'cloud-rain', volume: 0.70, node: null },
       { id: 'river', name: 'Dòng Suối Tĩnh Lặng', icon: 'droplets', volume: 0.65, node: null },
       { id: 'lofi', name: 'Lofi Jazz Ấm Áp', icon: 'music', volume: 0.60, node: null },
-      { id: 'fire', name: 'Lửa Trại Lách Tách', icon: 'flame', volume: 0.40, node: null },
+      { id: 'fire', name: 'Lửa Trại Lách Tách', icon: 'flame', volume: 0.70, node: null },
       { id: 'ocean', name: 'Sóng Biển Về Đêm', icon: 'waves', volume: 0.65, node: null },
       { id: 'wind', name: 'Gió Qua Đồi Thông', icon: 'wind', volume: 0.40, node: null },
       { id: 'chimes', name: 'Chuông Gió Pha Lê', icon: 'bell', volume: 0.45, node: null },
@@ -1184,6 +1164,7 @@
       return buffer;
     }
 
+    // 1. Tiếng mưa rơi lộp độp
     function createRainNode() {
       const buf = createPinkNoiseBuffer();
       if (!buf) return null;
@@ -1201,6 +1182,7 @@
       return { input: gain, stop: () => { try { src.stop(); } catch(e){} } };
     }
 
+    // 2. Dòng suối róc rách trong vắt
     function createRiverNode() {
       const buf = createPinkNoiseBuffer();
       if (!buf) return null;
@@ -1238,6 +1220,7 @@
       return { input: gain, stop: () => { try { src.stop(); lfo.stop(); } catch(e){} } };
     }
 
+    // 3. Lửa trại lách tách
     function createFireNode() {
       const buf = createPinkNoiseBuffer();
       if (!buf) return null;
@@ -1247,10 +1230,10 @@
 
       const lp = audioCtx.createBiquadFilter();
       lp.type = 'lowpass';
-      lp.frequency.value = 450;
+      lp.frequency.value = 550;
 
       const gain = audioCtx.createGain();
-      gain.gain.value = 0.35;
+      gain.gain.value = 0.95;
       src.connect(lp);
       lp.connect(gain);
       src.start(0);
@@ -1264,29 +1247,30 @@
           const filter = audioCtx.createBiquadFilter();
           
           osc.type = 'square';
-          osc.frequency.setValueAtTime(500 + Math.random() * 900, audioCtx.currentTime);
+          osc.frequency.setValueAtTime(600 + Math.random() * 1600, audioCtx.currentTime);
           
           filter.type = 'bandpass';
-          filter.frequency.setValueAtTime(1200 + Math.random() * 600, audioCtx.currentTime);
-          filter.Q.setValueAtTime(3.5, audioCtx.currentTime);
+          filter.frequency.setValueAtTime(1400 + Math.random() * 900, audioCtx.currentTime);
+          filter.Q.setValueAtTime(4.0, audioCtx.currentTime);
 
-          popGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-          popGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.03);
+          popGain.gain.setValueAtTime(0.85, audioCtx.currentTime);
+          popGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.035);
 
           osc.connect(filter);
           filter.connect(popGain);
           popGain.connect(gain);
 
           osc.start(audioCtx.currentTime);
-          osc.stop(audioCtx.currentTime + 0.035);
+          osc.stop(audioCtx.currentTime + 0.04);
         } catch(e){}
-        popTimer = setTimeout(pop, 100 + Math.random() * 280);
+        popTimer = setTimeout(pop, 40 + Math.random() * 180);
       }
       pop();
 
       return { input: gain, stop: () => { try { src.stop(); clearTimeout(popTimer); } catch(e){} } };
     }
 
+    // 4. Sóng biển về đêm
     function createOceanNode() {
       const buf = createPinkNoiseBuffer();
       if (!buf) return null;
@@ -1323,6 +1307,7 @@
       return { input: waveGain, stop: () => { try { src.stop(); lfo.stop(); } catch(e){} } };
     }
 
+    // 5. Gió qua rừng thông
     function createWindNode() {
       const buf = createPinkNoiseBuffer();
       if (!buf) return null;
@@ -1341,6 +1326,7 @@
       return { input: gain, stop: () => { try { src.stop(); } catch(e){} } };
     }
 
+    // 6. Chuông gió pha lê
     function createChimesNode() {
       const masterNode = audioCtx.createGain();
       masterNode.gain.value = 0.95;
@@ -1366,6 +1352,7 @@
       return { input: masterNode, stop: () => { try { clearTimeout(chimeTimer); } catch(e){} } };
     }
 
+    // 7. Nhạc Lofi Jazz
     function createLofiNode() {
       const masterNode = audioCtx.createGain();
       masterNode.gain.value = 0.85;
@@ -1415,6 +1402,7 @@
       return { input: masterNode, stop: () => { try { clearTimeout(timer); } catch(e){} } };
     }
 
+    // 8. Tiếng gõ phím
     function createKeyboardNode() {
       const masterNode = audioCtx.createGain();
       masterNode.gain.value = 0.5;
@@ -1580,7 +1568,7 @@
         setTrackVol('ocean', 0);
         setTrackVol('keyboard', 0);
       } else if (name === 'campfire') {
-        setTrackVol('fire', 0.40);
+        setTrackVol('fire', 0.85);
         setTrackVol('wind', 0.35);
         setTrackVol('chimes', 0.20);
         setTrackVol('rain', 0.15);
@@ -2064,7 +2052,7 @@
     }
 
     /* ==========================================================
-       6. VIẾT & BUÔNG BỎ (LỬA NGUYÊN BẢN BAN ĐẦU)
+       6. VIẾT & BUÔNG BỎ
        ========================================================== */
     const worryInput = document.getElementById('worryInput');
     const worryCharCount = document.getElementById('worryCharCount');
@@ -2077,9 +2065,9 @@
     }
 
     function releaseWorry(mode) {
-      const text = worryInput ? worryInput.value.trim() : '';
+      const text = worryInput.value.trim();
       if (!text) {
-        if (worryInput) worryInput.focus();
+        worryInput.focus();
         return;
       }
 
@@ -2223,7 +2211,7 @@
     }
 
     /* ==========================================================
-       7. ĐỐT GIẤY TỪ TỪ, BẦU TRỜ SAO NGÂN HÀ & HÍT THỞ (GIỮ NGUYÊN GỐC)
+       7. ĐỐT GIẤY TỪ TỪ, BẦU TRỜ SAO NGÂN HÀ & HÍT THỞ
        ========================================================== */
     let slowBurnCanvas, slowBurnCtx;
     let isPaperBurning = false;
@@ -2246,11 +2234,9 @@
 
       const igniteBtn = document.getElementById('ignitePaperBtn');
       const statusText = document.getElementById('slowBurnStatusText');
-      if (igniteBtn) {
-        igniteBtn.disabled = true;
-        igniteBtn.classList.add('opacity-50');
-      }
-      if (statusText) statusText.innerText = 'Đang cháy âm ỉ...';
+      igniteBtn.disabled = true;
+      igniteBtn.classList.add('opacity-50');
+      statusText.innerText = 'Đang cháy âm ỉ...';
 
       let burnProgress = 0;
       const embers = [];
@@ -2309,18 +2295,14 @@
         if (burnProgress < slowBurnCanvas.height + 20) {
           requestAnimationFrame(renderBurnStep);
         } else {
-          if (statusText) statusText.innerText = 'Đã cháy hết thành tro tàn ✨';
+          statusText.innerText = 'Đã cháy hết thành tro tàn ✨';
           setTimeout(() => {
             slowBurnCtx.clearRect(0, 0, slowBurnCanvas.width, slowBurnCanvas.height);
-            if (input) {
-              input.value = '';
-              input.placeholder = 'Trang giấy mới tinh khôi dành cho bạn. Bạn có muốn viết điều gì khác không?';
-            }
-            if (igniteBtn) {
-              igniteBtn.disabled = false;
-              igniteBtn.classList.remove('opacity-50');
-            }
-            if (statusText) statusText.innerText = 'Sẵn sàng châm lửa';
+            input.value = '';
+            input.placeholder = 'Trang giấy mới tinh khôi dành cho bạn. Bạn có muốn viết điều gì khác không?';
+            igniteBtn.disabled = false;
+            igniteBtn.classList.remove('opacity-50');
+            statusText.innerText = 'Sẵn sàng châm lửa';
             isPaperBurning = false;
           }, 1500);
         }
@@ -2330,21 +2312,16 @@
 
     function resetSlowPaper() {
       const input = document.getElementById('slowPaperInput');
-      if (input) input.value = '';
+      input.value = '';
       if (slowBurnCtx) slowBurnCtx.clearRect(0, 0, slowBurnCanvas.width, slowBurnCanvas.height);
       isPaperBurning = false;
-      const btn = document.getElementById('ignitePaperBtn');
-      const st = document.getElementById('slowBurnStatusText');
-      if (btn) {
-        btn.disabled = false;
-        btn.classList.remove('opacity-50');
-      }
-      if (st) st.innerText = 'Sẵn sàng châm lửa';
+      document.getElementById('ignitePaperBtn').disabled = false;
+      document.getElementById('ignitePaperBtn').classList.remove('opacity-50');
+      document.getElementById('slowBurnStatusText').innerText = 'Sẵn sàng châm lửa';
     }
 
     function setQuickPaperText(text) {
-      const input = document.getElementById('slowPaperInput');
-      if (input) input.value = text;
+      document.getElementById('slowPaperInput').value = text;
     }
 
     function switchMicroGame(game) {
@@ -2352,17 +2329,13 @@
         const el = document.getElementById(`game-${g}`);
         const btn = document.getElementById(`subtab-btn-${g}`);
         if (g === game) {
-          if (el) {
-            el.classList.remove('hidden');
-            el.classList.add('flex');
-          }
-          if (btn) btn.className = 'px-4 py-1.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-400/30 transition';
+          el.classList.remove('hidden');
+          el.classList.add('flex');
+          btn.className = 'px-4 py-1.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-400/30 transition';
         } else {
-          if (el) {
-            el.classList.add('hidden');
-            el.classList.remove('flex');
-          }
-          if (btn) btn.className = 'px-4 py-1.5 rounded-full text-xs font-medium bg-white/5 text-slate-400 hover:text-white border border-white/10 transition';
+          el.classList.add('hidden');
+          el.classList.remove('flex');
+          btn.className = 'px-4 py-1.5 rounded-full text-xs font-medium bg-white/5 text-slate-400 hover:text-white border border-white/10 transition';
         }
       });
 
@@ -2496,57 +2469,47 @@
       const timer = document.getElementById('breatheSecTimer');
 
       if (isBreathingActive) {
-        if (btn) {
-          btn.innerText = 'Dừng bài tập';
-          btn.classList.add('bg-rose-500/20', 'text-rose-300', 'border-rose-500/30');
-        }
+        btn.innerText = 'Dừng bài tập';
+        btn.classList.add('bg-rose-500/20', 'text-rose-300', 'border-rose-500/30');
         breathePhase = 0;
         breatheCount = 4;
-        if (actionText) actionText.innerText = 'Hít vào chậm rãi qua mũi...';
-        if (orb) orb.style.transform = 'scale(1.5)';
-        if (orbOuter) orbOuter.style.transform = 'scale(1.6)';
+        actionText.innerText = 'Hít vào chậm rãi qua mũi...';
+        orb.style.transform = 'scale(1.5)';
+        orbOuter.style.transform = 'scale(1.6)';
 
         breatheInterval = setInterval(() => {
           breatheCount--;
-          if (timer) timer.innerText = breatheCount;
+          timer.innerText = breatheCount;
 
           if (breatheCount <= 0) {
             breathePhase = (breathePhase + 1) % 3;
             if (breathePhase === 0) {
               breatheCount = 4;
-              if (actionText) {
-                actionText.innerText = 'Hít vào chậm rãi qua mũi...';
-                actionText.className = 'text-base font-medium text-teal-300 tracking-wide';
-              }
-              if (orb) orb.style.transform = 'scale(1.5)';
-              if (orbOuter) orbOuter.style.transform = 'scale(1.6)';
+              actionText.innerText = 'Hít vào chậm rãi qua mũi...';
+              actionText.className = 'text-base font-medium text-teal-300 tracking-wide';
+              orb.style.transform = 'scale(1.5)';
+              orbOuter.style.transform = 'scale(1.6)';
             } else if (breathePhase === 1) {
               breatheCount = 7;
-              if (actionText) {
-                actionText.innerText = 'Nín thở nhẹ nhàng, giữ tâm tĩnh...';
-                actionText.className = 'text-base font-medium text-amber-300 tracking-wide';
-              }
+              actionText.innerText = 'Nín thở nhẹ nhàng, giữ tâm tĩnh...';
+              actionText.className = 'text-base font-medium text-amber-300 tracking-wide';
             } else if (breathePhase === 2) {
               breatheCount = 8;
-              if (actionText) {
-                actionText.innerText = 'Thở ra từ từ qua miệng, buông lỏng vai...';
-                actionText.className = 'text-base font-medium text-indigo-300 tracking-wide';
-              }
-              if (orb) orb.style.transform = 'scale(0.9)';
-              if (orbOuter) orbOuter.style.transform = 'scale(1.0)';
+              actionText.innerText = 'Thở ra từ từ qua miệng, buông lỏng vai...';
+              actionText.className = 'text-base font-medium text-indigo-300 tracking-wide';
+              orb.style.transform = 'scale(0.9)';
+              orbOuter.style.transform = 'scale(1.0)';
             }
           }
         }, 1000);
       } else {
         clearInterval(breatheInterval);
-        if (btn) {
-          btn.innerText = 'Bắt đầu bài tập thở';
-          btn.className = 'px-6 py-2.5 rounded-full bg-teal-500/20 hover:bg-teal-500/30 text-teal-200 text-xs font-medium border border-teal-400/30 transition shadow-sm active:scale-95';
-        }
-        if (actionText) actionText.innerText = 'Đã dừng bài tập thở';
-        if (timer) timer.innerText = '4';
-        if (orb) orb.style.transform = 'scale(1)';
-        if (orbOuter) orbOuter.style.transform = 'scale(1)';
+        btn.innerText = 'Bắt đầu bài tập thở';
+        btn.className = 'px-6 py-2.5 rounded-full bg-teal-500/20 hover:bg-teal-500/30 text-teal-200 text-xs font-medium border border-teal-400/30 transition shadow-sm active:scale-95';
+        actionText.innerText = 'Đã dừng bài tập thở';
+        timer.innerText = '4';
+        orb.style.transform = 'scale(1)';
+        orbOuter.style.transform = 'scale(1)';
       }
     }
 
@@ -2597,7 +2560,7 @@
     }
 
     /* ==========================================================
-       8. KHỞI TẠO TỔNG THỂ
+       8. KHỞI TẠO TỔNG THỂ TƯƠNG THÍCH MỌI TRÌNH DUYỆT
        ========================================================== */
     function initializeApp() {
       renderSoundCards();
@@ -2627,6 +2590,7 @@
         });
       }
 
+      // Mở khóa AudioContext ngay tại chạm đầu tiên trên màn hình di động/iOS Safari
       const unlockAudio = () => {
         initAudioContext();
         document.removeEventListener('touchstart', unlockAudio);
@@ -2640,6 +2604,7 @@
       document.getElementById('toggleMasterAudioBtn')?.addEventListener('click', toggleMasterAudio);
     }
 
+    // Đảm bảo chạy mượt mà trên iOS Safari cả khi DOM load nhanh
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initializeApp);
     } else {
