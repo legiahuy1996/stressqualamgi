@@ -9,6 +9,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- MQTT.js CDN for Global Real-time Multi-device Public Sync -->
+  <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
   <!-- Google Fonts: Be Vietnam Pro, Playfair Display & Caveat -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -432,14 +434,17 @@
       <div class="text-left hidden sm:block">
         <div class="text-xs font-medium text-slate-200 flex items-center gap-1.5">
           Quán Trọ Đêm Mưa
-          <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">AI live</span>
+          <!-- Real-time Status Badge Indicator -->
+          <span id="chatMqttStatusBadge" class="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online
+          </span>
         </div>
         <div class="text-[10px] text-slate-400">Có Chú Bọ Cute & lữ khách đang lắng nghe</div>
       </div>
     </button>
 
     <!-- Expandable Chat Window -->
-    <div id="chatDrawer" class="hidden flex-col w-[92vw] sm:w-[390px] h-[540px] max-h-[82vh] rounded-3xl glass-panel border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden backdrop-blur-2xl animate-fade-in mt-3">
+    <div id="chatDrawer" class="hidden flex-col w-[92vw] sm:w-[410px] h-[550px] max-h-[82vh] rounded-3xl glass-panel border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden backdrop-blur-2xl animate-fade-in mt-3">
       <!-- Chat Header -->
       <div class="px-4 py-3 bg-slate-900/80 border-b border-white/10 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
@@ -447,12 +452,18 @@
             <i data-lucide="coffee" class="w-4 h-4"></i>
           </div>
           <div>
-            <h4 class="text-xs font-semibold text-slate-100 flex items-center gap-1.5">
-              Quán Trọ Đêm Mưa
-              <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-400/30 font-mono">Free AI Active</span>
-            </h4>
-            <div class="text-[10px] text-slate-400 flex items-center gap-1">
-              Bạn là: <input type="text" id="myChatNicknameInput" class="bg-transparent border-b border-white/20 text-amber-300 text-[10px] focus:outline-none focus:border-amber-400 px-0.5 max-w-[105px]" title="Click để đổi biệt danh của bạn">
+            <div class="flex items-center gap-2">
+              <h4 class="text-xs font-semibold text-slate-100">
+                Quán Trọ Đêm Mưa
+              </h4>
+              <!-- DYNAMIC AI ENGINE STATUS BADGE -->
+              <span id="aiEngineStatusBadge" title="Kiểm tra trạng thái kết nối AI" onclick="checkAiBackendStatus(true)" class="cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-amber-500/15 border-amber-400/30 text-amber-300 hover:brightness-110 active:scale-95">
+                <span id="aiEngineStatusDot" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                <span id="aiEngineStatusLabel">🟡 Free Engine</span>
+              </span>
+            </div>
+            <div class="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+              Bạn là: <input type="text" id="myChatNicknameInput" class="bg-transparent border-b border-white/20 text-amber-300 text-[10px] focus:outline-none focus:border-amber-400 px-0.5 max-w-[110px]" title="Click để đổi biệt danh của bạn">
             </div>
           </div>
         </div>
@@ -464,17 +475,22 @@
         </div>
       </div>
 
-      <!-- Quick Tag Bots Bar -->
-      <div class="px-3 py-1.5 bg-slate-950/60 border-b border-white/5 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[11px]">
-        <span class="text-[10px] text-slate-500 shrink-0">Trò chuyện cùng AI:</span>
-        <button onclick="tagBot('@Chú Bọ Cute ')" class="shrink-0 px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition flex items-center gap-1">
-          <span>🐞</span> Chú Bọ Cute
-        </button>
-        <button onclick="tagBot('@Mèo Béo ')" class="shrink-0 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition flex items-center gap-1">
-          <span>🐱</span> Mèo Béo
-        </button>
-        <button onclick="tagBot('@Bác Gấu ')" class="shrink-0 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition flex items-center gap-1">
-          <span>🐻</span> Bác Gấu
+      <!-- Quick Tag Bots Bar & Auto Conversation Switch -->
+      <div class="px-3 py-1.5 bg-slate-950/60 border-b border-white/5 flex items-center justify-between gap-1 text-[11px]">
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <span class="text-[10px] text-slate-500 shrink-0">Trò chuyện:</span>
+          <button onclick="tagBot('@Chú Bọ Cute ')" class="shrink-0 px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition flex items-center gap-1">
+            <span>🐞</span> Chú Bọ Cute
+          </button>
+          <button onclick="tagBot('@Mèo Béo ')" class="shrink-0 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition flex items-center gap-1">
+            <span>🐱</span> Mèo Béo
+          </button>
+          <button onclick="tagBot('@Bác Gấu ')" class="shrink-0 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition flex items-center gap-1">
+            <span>🐻</span> Bác Gấu
+          </button>
+        </div>
+        <button id="toggleBotBanterBtn" onclick="toggleBotAutoChat()" title="Bật/tắt các bot tự trò chuyện với nhau" class="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition">
+          ⚡ Bot 5s: <span id="botBanterStatusText" class="text-emerald-300">BẬT</span>
         </button>
       </div>
 
@@ -503,7 +519,9 @@
           <button onclick="sendQuickReaction('🌸')" class="hover:scale-125 transition" title="Gửi đóa hoa an lành">🌸</button>
           <button onclick="sendQuickReaction('✨')" class="hover:scale-125 transition" title="Điều ước tốt lành">✨</button>
         </div>
-        <span class="text-[10px] text-slate-400/80 italic">AI phản hồi tự động</span>
+        <span id="chatSyncStatusText" class="text-[10px] text-emerald-400/80 italic flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đồng bộ toàn cầu
+        </span>
       </div>
 
       <!-- Input Form -->
@@ -1125,7 +1143,7 @@
     // ==========================================
     // 3. PERSISTENT PAPER LANTERNS ON THE RIVER
     // ==========================================
-    const LANTERN_STORAGE_KEY = 'sanctuary_lanterns_v3';
+    const LANTERN_STORAGE_KEY = 'sanctuary_lanterns_v4';
     let userLanterns = [];
     let ambientLanterns = [];
     let activeRipples = [];
@@ -1940,12 +1958,15 @@
     }
 
     // ==========================================
-    // 8. FREE SECURE CHATBOT AI INTEGRATION
+    // 8. GLOBAL REALTIME CHAT (MQTT) & AI BOTS
     // ==========================================
-    const CHAT_CHANNEL = new BroadcastChannel('sanctuary_chat_room');
+    let isGeminiConfigured = false;
+    let mqttClient = null;
+    const MQTT_TOPIC = 'sanctuary_rainy_lounge_v4/chat';
+    const LOCAL_CHAT_KEY = 'sanctuary_chat_msgs_v4';
+
     let myNickname = localStorage.getItem('sanctuary_user_nick') || ('Lữ khách #' + (Math.floor(Math.random() * 900) + 100));
 
-    // Specialized persona configurations
     const BOTS = {
       bug: {
         id: 'bot_bug',
@@ -2010,15 +2031,53 @@
       { id: '2', sender: 'Bác Gấu Trà Ấm', badge: '🐻 an yên AI', text: 'Ngoài kia thành phố mưa rả rích, mời các cháu một tách trà ấm. Ngồi xuống sưởi ấm tâm hồn nào.', time: '23:18', isBot: true, botKey: 'bear' }
     ];
 
-    // Secure Dispatcher: Serverless proxy -> Free zero-config Pollinations API -> Local offline fallback
+    // Check backend Gemini API status and update label color
+    async function checkAiBackendStatus(notify = false) {
+      const badge = document.getElementById('aiEngineStatusBadge');
+      const dot = document.getElementById('aiEngineStatusDot');
+      const label = document.getElementById('aiEngineStatusLabel');
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const res = await fetch('/api/chat', { method: 'GET', signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.configured) {
+            isGeminiConfigured = true;
+            badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-emerald-500/20 border-emerald-400/40 text-emerald-300 hover:brightness-110 active:scale-95 shadow-sm shadow-emerald-950/40';
+            dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
+            label.innerText = '🟢 Gemini Active';
+            badge.title = 'Gemini API đã sẵn sàng từ biến môi trường GEMINI_API_KEY (Click để kiểm tra lại)';
+            if (notify) alert('Đã kết nối thành công với Gemini API từ Environment Variables (api/chat.js)!');
+            return;
+          }
+        }
+      } catch (e) {
+        // endpoint not yet deployed or error
+      }
+
+      // Fallback: Free Engine Active (MÀU VÀNG)
+      isGeminiConfigured = false;
+      badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-amber-500/15 border-amber-400/30 text-amber-300 hover:brightness-110 active:scale-95';
+      dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
+      label.innerText = '🟡 Free Engine';
+      badge.title = 'Đang dùng cổng AI miễn phí (Pollinations / Local Fallback). Bỏ file api/chat.js lên repo Vercel và đặt GEMINI_API_KEY để kích hoạt Gemini (màu xanh).';
+      if (notify) {
+        alert('Đang dùng Cổng AI Miễn Phí (Yellow Badge).\n\nĐể hiện màu XANH (Gemini Active):\n1. Tạo file api/chat.js trên repo (hoặc thư mục api/chat.js).\n2. Vào Vercel Settings -> Environment Variables -> Thêm GEMINI_API_KEY.\n3. Redeploy lại trang web.');
+      }
+    }
+
     async function queryLightweightAI(botKey, userMessage) {
       const bot = BOTS[botKey];
       const promptText = `${bot.systemPrompt}\n\nNgười dùng vừa tâm sự: "${userMessage}".\nHãy trả lời họ bằng giọng điệu nhân vật của bạn thật chân thành:`;
 
-      // 1. Try serverless backend route (e.g. Vercel /api/chat with hidden GEMINI_API_KEY environment variable)
+      // 1. Try serverless backend route with GEMINI_API_KEY
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        const timeoutId = setTimeout(() => controller.abort(), 7000);
         const proxyRes = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2028,13 +2087,16 @@
         clearTimeout(timeoutId);
         if (proxyRes.ok) {
           const data = await proxyRes.json();
-          if (data && data.reply) return cleanAiReply(data.reply);
+          if (data && data.reply) {
+            if (!isGeminiConfigured) checkAiBackendStatus();
+            return cleanAiReply(data.reply);
+          }
         }
       } catch (e) {
-        // Silent fallback to free public gateway if serverless route not configured
+        // Fall through to free engine
       }
 
-      // 2. Default Free Gateway: Zero-key public inference
+      // 2. Free Gateway
       try {
         const encodedPrompt = encodeURIComponent(promptText);
         const controller = new AbortController();
@@ -2051,11 +2113,9 @@
             return cleanAiReply(text.trim());
           }
         }
-      } catch (err) {
-        // Fallback to organic library
-      }
+      } catch (err) {}
 
-      // 3. Guaranteed Local Empathetic Response
+      // 3. Local fallback
       const fallbacks = bot.fallbackResponses;
       return fallbacks[Math.floor(Math.random() * fallbacks.length)];
     }
@@ -2064,6 +2124,209 @@
       return raw.replace(/^(Chú Bọ Cute|Mèo Béo|Bác Gấu):/i, '').replace(/^"|"$/g, '').trim();
     }
 
+    // ==========================================
+    // 9. REAL-TIME MULTI-USER SYNC VIA MQTT & BROADCASTCHANNEL
+    // ==========================================
+    const LOCAL_BROADCAST = new BroadcastChannel('sanctuary_local_tab_channel');
+
+    function initGlobalChatSync() {
+      // Load cached messages
+      try {
+        const cached = localStorage.getItem(LOCAL_CHAT_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            chatMessages = parsed;
+          }
+        }
+      } catch (e) {}
+      renderChatMessages();
+
+      // Local Tab Sync
+      LOCAL_BROADCAST.onmessage = (e) => {
+        if (e.data && e.data.type === 'NEW_MESSAGE') {
+          handleIncomingMessage(e.data.msg);
+        }
+      };
+
+      // Connect to HiveMQ Public WebSocket MQTT Broker for real multi-device sync
+      try {
+        if (typeof mqtt !== 'undefined') {
+          const clientId = 'sanctuary_' + Math.random().toString(16).substring(2, 10);
+          mqttClient = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', {
+            clientId: clientId,
+            clean: true,
+            connectTimeout: 4000,
+            reconnectPeriod: 5000
+          });
+
+          mqttClient.on('connect', () => {
+            const syncStatus = document.getElementById('chatSyncStatusText');
+            if (syncStatus) {
+              syncStatus.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đồng bộ toàn cầu (Live)';
+            }
+            mqttClient.subscribe(MQTT_TOPIC, { qos: 0 });
+          });
+
+          mqttClient.on('message', (topic, payload) => {
+            if (topic === MQTT_TOPIC) {
+              try {
+                const incoming = JSON.parse(payload.toString());
+                handleIncomingMessage(incoming);
+              } catch(err){}
+            }
+          });
+
+          mqttClient.on('offline', () => {
+            const syncStatus = document.getElementById('chatSyncStatusText');
+            if (syncStatus) {
+              syncStatus.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Đang kết nối lại...';
+            }
+          });
+        }
+      } catch(e) {
+        console.warn('MQTT sync warning:', e);
+      }
+    }
+
+    function handleIncomingMessage(msg) {
+      if (!msg || !msg.id) return;
+      if (chatMessages.some(m => m.id === msg.id)) return; // prevent duplicate
+
+      chatMessages.push(msg);
+      if (chatMessages.length > 60) chatMessages.shift();
+
+      saveChatMessages();
+      renderChatMessages();
+      playMessageArrivalChime();
+      showUnreadBadge();
+    }
+
+    function broadcastChatMessage(msg) {
+      // 1. Add locally
+      if (!chatMessages.some(m => m.id === msg.id)) {
+        chatMessages.push(msg);
+        if (chatMessages.length > 60) chatMessages.shift();
+        saveChatMessages();
+        renderChatMessages();
+      }
+
+      // 2. BroadcastChannel (Same Device Tabs)
+      try {
+        LOCAL_BROADCAST.postMessage({ type: 'NEW_MESSAGE', msg });
+      } catch (e) {}
+
+      // 3. MQTT Broadcast (Across different computers/phones)
+      if (mqttClient && mqttClient.connected) {
+        try {
+          mqttClient.publish(MQTT_TOPIC, JSON.stringify(msg));
+        } catch (e) {}
+      }
+    }
+
+    function saveChatMessages() {
+      try {
+        localStorage.setItem(LOCAL_CHAT_KEY, JSON.stringify(chatMessages.slice(-35)));
+      } catch(e){}
+    }
+
+    // ==========================================
+    // 10. BOT LIVELY BANTER LOOP (~5s INTERVAL)
+    // ==========================================
+    let isBotBanterEnabled = true;
+    let botBanterTimer = null;
+
+    const BOT_CONVERSATION_PAIRS = [
+      {
+        bot: 'bug',
+        text: '🐞 *chớp chớp mắt* Ngoài kia mưa to quá chừng, các bạn nhớ đắp chăn kín kẻo lạnh nha!'
+      },
+      {
+        bot: 'cat',
+        text: '🐱 Meo meo~ Đắp chăn rồi nhớ ôm gối mềm nữa, ai chưa ngủ tớ đến nằm cạnh sưởi ấm cho nè.'
+      },
+      {
+        bot: 'bear',
+        text: '🐻 Bác vừa đun xong một ấm nước sôi, pha thêm chút mật ong rừng. Uống một ngụm cho ấm lòng nào các cháu.'
+      },
+      {
+        bot: 'bug',
+        text: '🐞 @Bác Gấu ơi cho con xin một ngụm trà với! Bạn lữ khách nào đang buồn cũng ghé uống một tách với tụi mình nha 🌸'
+      },
+      {
+        bot: 'cat',
+        text: '🐱 *lăn qua lăn lại trên thảm ấm* Ở quán trọ này chẳng ai bắt bạn phải vội cả, cứ thả lỏng ra nhé gừ gừ~'
+      },
+      {
+        bot: 'bear',
+        text: '🐻 Cuộc đời này như một đêm mưa vậy đó cháu, giông bão có lớn đến đâu thì ban mai rực rỡ cũng sẽ tới.'
+      },
+      {
+        bot: 'bug',
+        text: '🐞 *ôm lấy ngón tay bạn* Bạn ơi dù cả thế giới có đòi hỏi bạn nhiều thế nào, thì với bọ, bạn thở đều thôi đã giỏi lắm rồi! 🫂'
+      },
+      {
+        bot: 'cat',
+        text: '🐱 Meo~ Bạn đang đọc tin nhắn này ơi, thả lỏng trán ra nào, đừng cau mày nữa nhé!'
+      }
+    ];
+
+    let banterStep = 0;
+
+    function startBotBanterLoop() {
+      if (botBanterTimer) clearTimeout(botBanterTimer);
+
+      function scheduleNextBanter() {
+        if (!isBotBanterEnabled) return;
+
+        // Interval random around 5 seconds (4.5s - 6.5s)
+        const delay = 4500 + Math.random() * 2000;
+        botBanterTimer = setTimeout(() => {
+          triggerBotBanterDialogue();
+          scheduleNextBanter();
+        }, delay);
+      }
+
+      scheduleNextBanter();
+    }
+
+    function triggerBotBanterDialogue() {
+      const pair = BOT_CONVERSATION_PAIRS[banterStep % BOT_CONVERSATION_PAIRS.length];
+      banterStep++;
+
+      const bot = BOTS[pair.bot];
+      const botMsg = {
+        id: 'bot_banter_' + Date.now(),
+        sender: bot.name,
+        badge: bot.badge,
+        text: pair.text,
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        isBot: true,
+        botKey: pair.bot
+      };
+
+      broadcastChatMessage(botMsg);
+      playMessageArrivalChime();
+      showUnreadBadge();
+    }
+
+    function toggleBotAutoChat() {
+      isBotBanterEnabled = !isBotBanterEnabled;
+      const text = document.getElementById('botBanterStatusText');
+      if (isBotBanterEnabled) {
+        text.innerText = 'BẬT';
+        text.className = 'text-emerald-300';
+        startBotBanterLoop();
+      } else {
+        text.innerText = 'TẮT';
+        text.className = 'text-rose-400';
+        if (botBanterTimer) clearTimeout(botBanterTimer);
+      }
+    }
+
+    // ==========================================
+    // 11. CHAT UI INTERACTIONS
+    // ==========================================
     function initChatSystem() {
       const inputNick = document.getElementById('myChatNicknameInput');
       if (inputNick) {
@@ -2074,45 +2337,9 @@
         });
       }
 
-      try {
-        const cached = localStorage.getItem('sanctuary_chat_msgs');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            chatMessages = parsed;
-          }
-        }
-      } catch(e){}
-
-      renderChatMessages();
-
-      CHAT_CHANNEL.onmessage = (event) => {
-        if (event.data && event.data.type === 'NEW_MESSAGE') {
-          chatMessages.push(event.data.msg);
-          renderChatMessages();
-          playMessageArrivalChime();
-          showUnreadBadge();
-        }
-      };
-
-      // Periodic check-in from Chú Bọ Cute
-      setInterval(() => {
-        if (Math.random() > 0.7) {
-          const spontaneousNotes = [
-            '🐞 Chú Bọ Cute nhắc bạn uống một ngụm nước ấm và hạ vai xuống thả lỏng cơ mặt nhé!',
-            '🐞 Đêm đã muộn rồi, nếu mệt quá bạn nhớ đi ngủ sớm nha, ngày mai trời lại sáng thôi!',
-            '🐱 Mèo béo meo meo nhắc mọi người trong quán trọ đắp chăn kín kẻo cảm lạnh đêm mưa.'
-          ];
-          const chosen = spontaneousNotes[Math.floor(Math.random() * spontaneousNotes.length)];
-          const isBug = chosen.includes('🐞');
-          appendBotMessage(
-            isBug ? BOTS.bug.name : BOTS.cat.name,
-            isBug ? BOTS.bug.badge : BOTS.cat.badge,
-            chosen,
-            isBug ? 'bug' : 'cat'
-          );
-        }
-      }, 75000);
+      initGlobalChatSync();
+      checkAiBackendStatus();
+      startBotBanterLoop();
     }
 
     function toggleChatDrawer() {
@@ -2207,7 +2434,15 @@
     }
 
     function sendQuickReaction(emoji) {
-      postMessageToChat(emoji);
+      const newMsg = {
+        id: 'reaction_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        sender: myNickname,
+        badge: '',
+        text: emoji,
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        isBot: false
+      };
+      broadcastChatMessage(newMsg);
     }
 
     function handleSendChatMessage(e) {
@@ -2216,15 +2451,8 @@
       const text = input.value.trim();
       if (!text) return;
 
-      postMessageToChat(text);
-      input.value = '';
-
-      processBotAiResponse(text);
-    }
-
-    function postMessageToChat(text) {
-      const newMsg = {
-        id: 'msg_' + Date.now(),
+      const userMsg = {
+        id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
         sender: myNickname,
         badge: '',
         text: text,
@@ -2232,19 +2460,10 @@
         isBot: false
       };
 
-      chatMessages.push(newMsg);
-      if (chatMessages.length > 50) chatMessages.shift();
+      broadcastChatMessage(userMsg);
+      input.value = '';
 
-      saveChatMessages();
-      renderChatMessages();
-
-      CHAT_CHANNEL.postMessage({ type: 'NEW_MESSAGE', msg: newMsg });
-    }
-
-    function saveChatMessages() {
-      try {
-        localStorage.setItem('sanctuary_chat_msgs', JSON.stringify(chatMessages.slice(-25)));
-      } catch(e){}
+      processBotAiResponse(text);
     }
 
     async function processBotAiResponse(userText) {
@@ -2274,8 +2493,7 @@
         }
       }
 
-      // Default to Chú Bọ Cute if someone sends a thoughtful message
-      if (!matchedBotKey && userText.length > 8) {
+      if (!matchedBotKey && userText.length > 7) {
         matchedBotKey = 'bug';
       }
 
@@ -2286,7 +2504,20 @@
         const aiReply = await queryLightweightAI(matchedBotKey, userText);
 
         hideTypingIndicator();
-        appendBotMessage(bot.name, bot.badge, aiReply, matchedBotKey);
+
+        const botReplyMsg = {
+          id: 'bot_reply_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          sender: bot.name,
+          badge: bot.badge,
+          text: aiReply,
+          time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+          isBot: true,
+          botKey: matchedBotKey
+        };
+
+        broadcastChatMessage(botReplyMsg);
+        playMessageArrivalChime();
+        showUnreadBadge();
       }
     }
 
@@ -2309,30 +2540,8 @@
       }
     }
 
-    function appendBotMessage(botName, botBadge, text, botKey) {
-      const botMsg = {
-        id: 'bot_' + Date.now(),
-        sender: botName,
-        badge: botBadge,
-        text: text,
-        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-        isBot: true,
-        botKey: botKey
-      };
-
-      chatMessages.push(botMsg);
-      if (chatMessages.length > 50) chatMessages.shift();
-
-      saveChatMessages();
-      renderChatMessages();
-      playMessageArrivalChime();
-      showUnreadBadge();
-
-      CHAT_CHANNEL.postMessage({ type: 'NEW_MESSAGE', msg: botMsg });
-    }
-
     // ==========================================
-    // 9. APP INITIALIZATION
+    // 12. INITIALIZATION ON WINDOW LOAD
     // ==========================================
     window.addEventListener('load', () => {
       renderSoundCards();
