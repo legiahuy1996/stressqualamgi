@@ -2018,24 +2018,40 @@ Trút đi nặng trĩu ưu phiền,
 
     let chatMessages = [...DEFAULT_HISTORY];
 
-    function checkAiBackendStatus() {
+    // Check backend API route status without alert popups
+    async function checkAiBackendStatus() {
       const badge = document.getElementById('aiEngineStatusBadge');
       const dot = document.getElementById('aiEngineStatusDot');
       const label = document.getElementById('aiEngineStatusLabel');
 
-      const hasChatJsHandler = typeof window.chatHandler === 'function' ||
-                               typeof window.generateChatReply === 'function' ||
-                               typeof window.queryPoeticAI === 'function' ||
-                               window.CHAT_JS_LOADED === true;
+      const endpoints = ['/api/chat', '/app/api/chat'];
+      let foundActiveKey = false;
 
-      if (hasChatJsHandler) {
-        isChatJsLoaded = true;
+      for (const ep of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const res = await fetch(ep, { method: 'GET', signal: controller.signal });
+          clearTimeout(timeoutId);
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data && (data.configured || data.hasKey)) {
+              foundActiveKey = true;
+              break;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (foundActiveKey) {
+        isGeminiConfigured = true;
         badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-emerald-500/20 border-emerald-400/40 text-emerald-300 hover:brightness-110 active:scale-95 shadow-sm shadow-emerald-950/40';
         dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
-        label.innerText = '🟢 Chat.js Loaded';
-        badge.title = 'Đã nạp file chat.js thành công!';
+        label.innerText = '🟢 Gemini Active';
+        badge.title = 'Gemini API đã sẵn sàng từ biến môi trường GEMINI_API_KEY';
       } else {
-        isChatJsLoaded = false;
+        isGeminiConfigured = false;
         badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-amber-500/15 border-amber-400/30 text-amber-300 hover:brightness-110 active:scale-95';
         dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
         label.innerText = '🟡 Free Engine';
@@ -2046,31 +2062,31 @@ Trút đi nặng trĩu ưu phiền,
     async function queryPoeticAI(userMessage) {
       const promptText = `${BOT_BUG.systemPrompt}\n\nNgười dùng nhắn: "${userMessage}".\nHãy làm ngay một bài thơ vỗ về họ (4-6 dòng thơ có xuống dòng, chỉ trả về bài thơ, không văn xuôi):`;
 
-      try {
-        if (typeof window.queryPoeticAI === 'function') {
-          const res = await window.queryPoeticAI(userMessage, promptText);
-          if (res) return cleanAiPoem(res);
-        } else if (typeof window.generateChatReply === 'function') {
-          const res = await window.generateChatReply({ message: userMessage, prompt: promptText });
-          if (res) return cleanAiPoem(res);
-        } else if (typeof window.chatHandler === 'function') {
-          const mockReq = { body: { message: userMessage, prompt: promptText } };
-          let resData = null;
-          const mockRes = {
-            status: () => mockRes,
-            json: (data) => { resData = data; return mockRes; },
-            setHeader: () => mockRes,
-            end: () => mockRes
-          };
-          await window.chatHandler(mockReq, mockRes);
-          if (resData && (resData.reply || resData.message)) {
-            return cleanAiPoem(resData.reply || resData.message);
+      // 1. Backend routes
+      const endpoints = ['/api/chat', '/app/api/chat'];
+      for (const ep of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6500);
+          const proxyRes = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ botKey: 'bug', message: userMessage, prompt: promptText }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (proxyRes.ok) {
+            const data = await proxyRes.json();
+            if (data && data.reply) {
+              if (!isGeminiConfigured) checkAiBackendStatus();
+              return cleanAiPoem(data.reply);
+            }
           }
-        }
-      } catch (e) {
-        console.warn('Lỗi khi gọi qua chat.js:', e);
+        } catch (e) {}
       }
 
+      // 2. Free Gateway
       try {
         const encodedPrompt = encodeURIComponent(promptText);
         const controller = new AbortController();
@@ -2089,10 +2105,11 @@ Trút đi nặng trĩu ưu phiền,
         }
       } catch (err) {}
 
+      // 3. Fallback Poem Library
       const poems = BOT_BUG.fallbackPoems;
       return poems[Math.floor(Math.random() * poems.length)];
     }
-
+    
     function cleanAiPoem(raw) {
       return raw
         .replace(/^(Chú Bọ Cute|Chú Bọ):/i, '')
