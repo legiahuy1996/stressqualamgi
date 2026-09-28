@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chốn Bình Yên • Dòng Sông Đèn Lồng & Xả Stress</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Be Vietnam Pro & Playfair Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Be Vietnam Pro"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+            handwriting: ['"Caveat"', 'cursive'],
+          },
+          colors: {
+            sanctuary: {
+              950: '#03050c',
+              900: '#070a18',
+              800: '#0e142e',
+              card: 'rgba(14, 20, 46, 0.72)',
+              border: 'rgba(255, 255, 255, 0.08)',
+              amberLight: '#fde68a',
+              amberGlow: '#f59e0b',
+              ember: '#ef4444',
+            }
+          },
+          animation: {
+            'pulse-slow': 'pulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'flame': 'flame 1.2s ease-in-out infinite alternate',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    textarea, input {
+      user-select: auto;
+    }
+    body {
+      background-color: #040612;
+      color: #e2e8f0;
+      overflow-x: hidden;
+    }
+    .glass-panel {
+      background: rgba(13, 19, 44, 0.75);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.55);
+    }
+    .custom-slider {
+      accent-color: #f59e0b;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    #burnCanvas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .parchment-sheet {
+      background: radial-gradient(circle at 50% 30%, #fdfbf7 0%, #f5ecd8 60%, #e8d9bc 100%);
+      box-shadow: 0 10px 35px rgba(0,0,0,0.6), inset 0 0 40px rgba(180, 130, 70, 0.2);
+    }
+  </style>
+</head>
+<body class="min-h-screen relative flex flex-col font-sans selection:bg-amber-500/20 selection:text-amber-200">
+
+  <!-- Ambient Dust Particles Canvas -->
+  <canvas id="bgDustCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-50"></canvas>
+
+  <!-- Ambient Background Lighting Orbs -->
+  <div class="fixed -top-40 -left-40 w-96 h-96 bg-indigo-700/15 rounded-full blur-[130px] pointer-events-none"></div>
+  <div class="fixed top-1/3 -right-40 w-96 h-96 bg-amber-500/10 rounded-full blur-[130px] pointer-events-none"></div>
+  <div class="fixed bottom-0 left-1/3 w-[34rem] h-80 bg-rose-600/10 rounded-full blur-[140px] pointer-events-none"></div>
+
+  <header class="relative z-20 w-full max-w-6xl mx-auto px-4 pt-6 pb-4 flex flex-wrap items-center justify-between gap-4 border-b border-white/5">
+    <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('soundscape')">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500/30 via-orange-500/20 to-teal-400/20 flex items-center justify-center border border-white/15 shadow-inner">
+        <i data-lucide="sparkles" class="w-5 h-5 text-amber-300"></i>
+      </div>
+      <div>
+        <h1 class="font-serif text-xl sm:text-2xl font-semibold tracking-wide bg-gradient-to-r from-amber-200 via-orange-200 to-indigo-200 bg-clip-text text-transparent">
+          Chốn Bình Yên
+        </h1>
+        <p class="text-xs text-slate-400 tracking-wider">Thắp sáng đèn lồng, hóa giải muộn phiền theo dòng nước</p>
+      </div>
+    </div>
+
+    <!-- Master Web Audio Controller -->
+    <div class="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-full border border-white/10 shadow-lg">
+      <button id="toggleMasterAudioBtn" class="flex items-center gap-2 text-xs sm:text-sm font-medium px-3.5 py-1.5 rounded-full bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition border border-amber-500/30 active:scale-95">
+        <i data-lucide="play" id="masterPlayIcon" class="w-4 h-4 fill-current"></i>
+        <span id="masterPlayText">Bật Âm Thanh</span>
+      </button>
+      <div class="flex items-center gap-2 pl-2 border-l border-white/10">
+        <i data-lucide="volume-2" class="w-4 h-4 text-slate-400"></i>
+        <input type="range" id="masterVolumeSlider" min="0" max="1" step="0.01" value="0.75" class="w-20 sm:w-28 h-1.5 custom-slider cursor-pointer bg-slate-700 rounded-lg">
+      </div>
+    </div>
+  </header>
+
+  <main class="relative z-10 w-full max-w-6xl mx-auto px-4 py-6 flex-1 flex flex-col gap-6">
+
+    <!-- Primary Navigation Pills -->
+    <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+      <button onclick="switchTab('soundscape')" id="tab-btn-soundscape" class="tab-button px-5 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 bg-white/10 text-white border border-white/15 shadow-sm">
+        <i data-lucide="headphones" class="w-4 h-4"></i> Không Gian Âm Thanh
+      </button>
+      <button onclick="switchTab('burner')" id="tab-btn-burner" class="tab-button px-5 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 bg-transparent text-slate-400 hover:text-slate-200 border border-transparent">
+        <i data-lucide="feather" class="w-4 h-4"></i> Viết & Buông Bỏ
+      </button>
+      <button onclick="switchTab('river')" id="tab-btn-river" class="tab-button px-5 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 bg-transparent text-slate-400 hover:text-slate-200 border border-transparent relative">
+        <i data-lucide="lantern" class="w-4 h-4 text-amber-300"></i> Dòng Sông Đèn Lồng
+        <span id="riverLanternBadge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+      </button>
+      <button onclick="switchTab('mindless')" id="tab-btn-mindless" class="tab-button px-5 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 bg-transparent text-slate-400 hover:text-slate-200 border border-transparent">
+        <i data-lucide="sparkles" class="w-4 h-4"></i> Vùng Xả Não
+      </button>
+    </div>
+
+    <!-- Section 1: Soundscape Mixer -->
+    <section id="section-soundscape" class="w-full flex flex-col gap-6">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 glass-panel p-4 rounded-2xl">
+        <div class="flex items-center gap-2 text-sm text-slate-300 font-medium">
+          <i data-lucide="sparkle" class="w-4 h-4 text-amber-300"></i> Gợi ý phối âm thư giãn:
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="applyPreset('riverTranquil')" class="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-xs text-amber-200 border border-amber-400/30 transition flex items-center gap-1.5">
+            🏮 Sông đêm tĩnh mịch
+          </button>
+          <button onclick="applyPreset('rainy')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-sky-200 border border-sky-400/20 transition flex items-center gap-1.5">
+            🌧️ Mưa đêm tịnh tâm
+          </button>
+          <button onclick="applyPreset('campfire')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-rose-200 border border-rose-400/20 transition flex items-center gap-1.5">
+            🔥 Lò sưởi ấm cúng
+          </button>
+          <button onclick="applyPreset('lofi')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-indigo-200 border border-indigo-400/20 transition flex items-center gap-1.5">
+            🎹 Lofi Jazz sâu lắng
+          </button>
+          <button onclick="applyPreset('muteAll')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/20 text-xs text-slate-400 hover:text-rose-200 border border-white/10 transition">
+            Tắt tất cả
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="soundCardContainer">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <!-- Section 2: Worry Release -->
+    <section id="section-burner" class="hidden w-full flex-col items-center">
+      <div class="w-full max-w-2xl glass-panel p-6 sm:p-8 rounded-3xl relative overflow-hidden flex flex-col gap-6">
+        <canvas id="burnCanvas"></canvas>
+
+        <div class="text-center space-y-2">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20">
+            <i data-lucide="feather" class="w-3.5 h-3.5"></i> Góc giải tỏa tâm trí
+          </span>
+          <h2 class="text-xl sm:text-2xl font-serif font-semibold text-slate-100">
+            Điều gì đang khiến tâm bạn không yên?
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+            Viết ra những ấm ức, áp lực hay trăn trở. Bạn có thể gửi gắm nó vào một ngọn đèn lồng giấy ấm áp để thả trôi theo dòng nước đêm tĩnh lặng.
+          </p>
+        </div>
+
+        <div class="relative">
+          <textarea id="worryInput" rows="6" placeholder="Tôi đang cảm thấy nặng trĩu vì... Tôi băn khoăn về... Tôi muốn buông bớt..." class="w-full bg-slate-950/60 text-slate-200 border border-white/10 rounded-2xl p-4 text-sm focus:outline-none focus:border-amber-400/40 focus:ring-1 focus:ring-amber-400/30 transition resize-none placeholder-slate-600 leading-relaxed"></textarea>
+          <div class="absolute bottom-3 right-3 text-xs text-slate-500" id="worryCharCount">0 từ</div>
+        </div>
+
+        <!-- Release Action Buttons -->
+        <div class="flex flex-wrap items-center justify-center gap-3">
+          <button id="btnDrift" onclick="releaseWorry('lantern')" class="flex-1 min-w-[170px] px-5 py-3.5 rounded-xl bg-gradient-to-r from-amber-600/40 via-orange-600/40 to-teal-600/40 hover:from-amber-600/60 hover:to-teal-600/60 border border-amber-400/40 text-amber-100 font-medium text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-amber-950/30 active:scale-95 group">
+            <i data-lucide="send" class="w-4 h-4 text-amber-300 group-hover:translate-x-0.5 transition-transform"></i> Thả đèn lồng trôi sông
+          </button>
+          <button id="btnBurn" onclick="releaseWorry('burn')" class="flex-1 min-w-[140px] px-4 py-3.5 rounded-xl bg-gradient-to-r from-amber-600/30 to-rose-600/30 hover:from-amber-600/50 hover:to-rose-600/50 border border-amber-500/30 text-amber-100 font-medium text-sm flex items-center justify-center gap-2 transition active:scale-95">
+            <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i> Đốt thành tàn tro
+          </button>
+          <button id="btnStars" onclick="releaseWorry('stars')" class="flex-1 min-w-[140px] px-4 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600/30 to-purple-600/30 hover:from-indigo-600/50 hover:to-purple-600/50 border border-indigo-500/30 text-indigo-100 font-medium text-sm flex items-center justify-center gap-2 transition active:scale-95">
+            <i data-lucide="sparkles" class="w-4 h-4 text-purple-300"></i> Gửi vào sao đêm
+          </button>
+        </div>
+
+        <!-- Affirmation Modal Box -->
+        <div id="affirmationBox" class="hidden flex-col items-center justify-center text-center p-6 bg-gradient-to-b from-slate-900/90 to-indigo-950/90 border border-indigo-500/20 rounded-2xl animate-fade-in space-y-3">
+          <div class="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-400/30 flex items-center justify-center text-amber-300 mx-auto">
+            <i data-lucide="heart" class="w-6 h-6"></i>
+          </div>
+          <p id="affirmationText" class="font-serif italic text-base sm:text-lg text-amber-100 max-w-md">
+            "Bạn đã trải qua một ngày dài mệt mỏi rồi. Hãy để dòng nước cuốn đi mọi gánh nặng và nghỉ ngơi nhé."
+          </p>
+          <button onclick="resetWorryBox()" class="text-xs text-slate-400 hover:text-white underline underline-offset-4 pt-2">
+            Gửi thêm một trăn trở khác
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Section 3: River of Drifting Paper Box Lanterns -->
+    <section id="section-river" class="hidden w-full flex-col gap-4">
+      <div class="w-full flex flex-wrap items-center justify-between gap-3 glass-panel px-5 py-3 rounded-2xl">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-300">
+            <i data-lucide="compass" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-slate-200">Dòng Sông Đèn Lồng</h3>
+            <p class="text-[11px] text-slate-400">Click mặt nước để dập dềnh sóng hoặc click vào đèn lồng để xem lại trăn trở</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="spawnAmbientLantern()" class="px-3.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 rounded-xl text-xs text-amber-200 transition flex items-center gap-1.5 active:scale-95">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Thả đèn lồng an yên mới
+          </button>
+          <button onclick="clearUserLanterns()" title="Thu dọn các đèn lồng của bạn" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl text-xs text-rose-300 transition flex items-center gap-1.5">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Thu dọn đèn cũ
+          </button>
+          <button onclick="switchTab('burner')" class="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs text-slate-300 transition flex items-center gap-1.5">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Viết trăn trở
+          </button>
+        </div>
+      </div>
+
+      <!-- River Interactive Canvas -->
+      <div class="relative w-full h-[520px] rounded-3xl overflow-hidden glass-panel border border-amber-500/20 shadow-2xl cursor-pointer" id="riverContainer">
+        <canvas id="riverCanvas" class="w-full h-full block"></canvas>
+
+        <!-- Status & Lantern counter overlay -->
+        <div class="absolute top-4 left-6 pointer-events-none flex items-center gap-2 text-xs text-slate-400/80 bg-slate-950/40 px-3.5 py-1.5 rounded-full backdrop-blur-sm border border-white/5">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          Đang có <strong id="lanternCountText" class="text-amber-300 mx-1">0</strong> ngọn đèn lồng (Bao gồm <span id="myLanternCountText" class="text-orange-300 font-semibold mx-1">0</span> đèn của bạn)
+        </div>
+
+        <!-- Floating Thought Inspector Overlay -->
+        <div id="lanternDetailModal" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-md p-6 rounded-2xl bg-slate-900/95 border border-amber-400/30 shadow-[0_0_55px_rgba(251,191,36,0.25)] backdrop-blur-xl flex flex-col gap-4 text-center z-30 transition-all duration-300">
+          <div class="w-10 h-10 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 mx-auto flex items-center justify-center">
+            <i data-lucide="flame" class="w-5 h-5"></i>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[11px] text-amber-300 uppercase tracking-widest font-medium">Trăn trở gửi gắm theo đèn lồng</span>
+            <p id="modalThoughtText" class="text-sm text-slate-200 italic font-serif leading-relaxed px-2"></p>
+            <span id="modalLanternDate" class="text-[11px] text-slate-500 block pt-1"></span>
+          </div>
+          <p class="text-xs text-slate-400 font-sans border-t border-white/10 pt-3">
+            "Ánh lửa đèn lồng xua tan đêm tối, để lòng bạn tìm về chốn an yên."
+          </p>
+          <div class="flex items-center justify-center gap-2 pt-1">
+            <button id="modalDeleteLanternBtn" onclick="deleteCurrentLantern()" class="px-3.5 py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-300 text-xs font-medium rounded-xl transition flex items-center gap-1.5">
+              <i data-lucide="trash" class="w-3.5 h-3.5"></i> Xóa đèn này
+            </button>
+            <button onclick="closeLanternModal()" class="px-5 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 text-amber-200 text-xs font-medium rounded-xl transition">
+              Tiếp tục ngắm dòng sông
+            </button>
+          </div>
+        </div>
+
+        <div class="absolute bottom-4 right-4 pointer-events-none flex items-center gap-2 text-[11px] text-slate-400 bg-slate-950/60 px-3.5 py-1.5 rounded-full border border-amber-500/30 backdrop-blur-sm shadow-lg">
+          <i data-lucide="waves" class="w-3.5 h-3.5 text-amber-300"></i> Click/chạm để tạo sóng dập dềnh đèn lồng
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Mindless Zones & Slow Paper Burning -->
+    <section id="section-mindless" class="hidden w-full flex-col gap-6">
+      <div class="flex items-center justify-center gap-2 border-b border-white/5 pb-4">
+        <button onclick="switchZenGame('paperBurn')" id="zen-tab-paperBurn" class="px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-white/10 text-white border border-white/10 transition flex items-center gap-1.5">
+          📜 Đốt giấy từ từ
+        </button>
+        <button onclick="switchZenGame('stars')" id="zen-tab-stars" class="px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-transparent text-slate-400 hover:text-slate-200 border border-transparent transition flex items-center gap-1.5">
+          ✨ Vẽ sao trời
+        </button>
+        <button onclick="switchZenGame('breath')" id="zen-tab-breath" class="px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-transparent text-slate-400 hover:text-slate-200 border border-transparent transition flex items-center gap-1.5">
+          🫁 Hít thở 4-7-8
+        </button>
+      </div>
+
+      <!-- Slow Paper Burning Simulator -->
+      <div id="game-paperBurn-wrapper" class="w-full max-w-2xl mx-auto flex flex-col items-center gap-4">
+        
+        <!-- Preset Trouble Pills -->
+        <div class="w-full flex items-center justify-between text-xs text-slate-400 px-2 flex-wrap gap-2">
+          <span>Gợi ý điều cần đốt bỏ:</span>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="setPaperTrouble('Áp lực deadline & công việc đè nặng')" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-amber-500/20 hover:text-amber-200 text-[11px] text-slate-400 transition">
+              Áp lực công việc
+            </button>
+            <button onclick="setPaperTrouble('Sự tự ti, sợ rằng mình không đủ tốt')" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-amber-500/20 hover:text-amber-200 text-[11px] text-slate-400 transition">
+              Nỗi sợ thất bại
+            </button>
+            <button onclick="setPaperTrouble('Cơn giận dữ và những lời nói làm tổn thương')" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-amber-500/20 hover:text-amber-200 text-[11px] text-slate-400 transition">
+              Ấm ức trong lòng
+            </button>
+          </div>
+        </div>
+
+        <!-- Burning Container Card -->
+        <div class="relative w-full h-[440px] sm:h-[480px] rounded-3xl overflow-hidden glass-panel p-4 sm:p-6 flex flex-col items-center justify-center">
+          
+          <!-- Interactive Parchment Sheet with burning overlay -->
+          <div id="parchmentContainer" class="relative w-full max-w-md h-full rounded-2xl parchment-sheet border border-amber-900/30 overflow-hidden flex flex-col justify-between p-6 transition-transform duration-500 shadow-2xl">
+            
+            <!-- Paper Header -->
+            <div class="flex items-center justify-between border-b border-amber-900/20 pb-3">
+              <span class="text-xs uppercase tracking-widest text-amber-900/70 font-semibold font-serif">Mảnh Giấy Muộn Phiền</span>
+              <span class="text-[11px] text-amber-800/60 italic font-serif">Hóa tro tàn để lòng nhẹ nhõm</span>
+            </div>
+
+            <!-- Paper Text Content -->
+            <div class="relative z-10 flex-1 my-3 flex flex-col justify-center">
+              <textarea id="parchmentInput" rows="5" placeholder="Viết điều khiến bạn nặng lòng lên trang giấy này..." class="w-full bg-transparent text-amber-950 font-handwriting text-2xl sm:text-3xl leading-relaxed focus:outline-none placeholder-amber-900/40 resize-none"></textarea>
+            </div>
+
+            <!-- Paper Footer with ignite action -->
+            <div id="parchmentActionRow" class="relative z-10 pt-3 border-t border-amber-900/20 flex items-center justify-between">
+              <span class="text-[11px] text-amber-900/60 font-serif">Châm lửa từ đáy giấy</span>
+              <button id="ignitePaperBtn" onclick="ignitePaperSlowly()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 via-amber-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white font-medium text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-orange-950/40 active:scale-95 transition">
+                <i data-lucide="flame" class="w-4 h-4 text-amber-200"></i> Châm lửa đốt từ từ
+              </button>
+            </div>
+
+            <!-- Organic Ember & Smoke Canvas Overlay -->
+            <canvas id="paperBurnCanvas" class="absolute inset-0 pointer-events-none z-20"></canvas>
+          </div>
+
+          <!-- Post-burn Affirmation Overlay -->
+          <div id="paperBurnSuccessBox" class="hidden absolute inset-0 z-30 flex-col items-center justify-center text-center p-6 bg-slate-950/90 backdrop-blur-md animate-fade-in space-y-4">
+            <div class="w-14 h-14 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(251,191,36,0.3)]">
+              <i data-lucide="sparkles" class="w-7 h-7"></i>
+            </div>
+            <div class="space-y-1 max-w-md">
+              <h3 class="font-serif text-lg sm:text-xl text-amber-200">Tro tàn đã tan biến theo gió</h3>
+              <p id="paperSuccessQuote" class="text-xs sm:text-sm text-slate-300 italic font-serif leading-relaxed px-4">
+                "Muộn phiền ấy giờ đây không còn tồn tại trên đời nữa. Bạn được tự do và bình yên rồi."
+              </p>
+            </div>
+            <button onclick="resetParchmentPaper()" class="px-6 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-medium rounded-xl transition flex items-center gap-2 shadow-lg active:scale-95">
+              <i data-lucide="file-plus" class="w-4 h-4"></i> Lấy một tờ giấy mới
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Starlight Constellation Canvas -->
+      <div id="game-stars-wrapper" class="hidden w-full max-w-3xl mx-auto flex-col items-center gap-3">
+        <div class="w-full flex items-center justify-between text-xs text-slate-400 px-2">
+          <span>Click hoặc kéo chuột trên canvas để thắp sáng các vì sao và tạo âm thanh êm dịu</span>
+          <button onclick="clearStarCanvas()" class="px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-300 transition flex items-center gap-1">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Xóa bầu trời
+          </button>
+        </div>
+        <div class="w-full h-80 sm:h-96 glass-panel rounded-3xl relative overflow-hidden cursor-crosshair">
+          <canvas id="interactiveStarCanvas" class="w-full h-full block"></canvas>
+          <div class="absolute bottom-3 left-4 text-[11px] text-slate-500 pointer-events-none">
+            ⭐ Mỗi ngôi sao mang một nốt nhạc ngũ cung bình an
+          </div>
+        </div>
+      </div>
+
+      <!-- 4-7-8 Breathing Circle -->
+      <div id="game-breath-wrapper" class="hidden w-full max-w-xl mx-auto flex-col items-center gap-6 glass-panel p-8 sm:p-12 rounded-3xl text-center">
+        <div class="space-y-1">
+          <h3 class="font-serif text-lg text-slate-200">Nhịp Thở Chữa Lành 4-7-8</h3>
+          <p class="text-xs text-slate-400">Hạ nhịp tim và thả lỏng hệ thần kinh căng thẳng</p>
+        </div>
+
+        <div class="relative w-64 h-64 flex items-center justify-center my-4">
+          <div class="absolute inset-0 rounded-full border border-amber-500/20 animate-pulse-slow"></div>
+          
+          <div id="breathingOrb" class="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-500/40 via-orange-400/50 to-indigo-400/40 border border-white/40 shadow-[0_0_50px_rgba(251,191,36,0.3)] transition-all duration-1000 flex flex-col items-center justify-center transform-gpu">
+            <span id="breathPhaseText" class="font-serif text-slate-100 text-sm font-medium tracking-wide">Hít Vào</span>
+            <span id="breathTimerNum" class="text-xs text-amber-200 font-mono mt-0.5">4s</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button id="toggleBreathBtn" onclick="toggleBreathingGuide()" class="px-6 py-2.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 text-amber-200 text-sm font-medium transition flex items-center gap-2">
+            <i data-lucide="play" id="breathBtnIcon" class="w-4 h-4"></i>
+            <span id="breathBtnLabel">Bắt đầu chu kỳ thở</span>
+          </button>
+        </div>
+
+        <p class="text-xs text-slate-500 max-w-xs">
+          Hít sâu bằng mũi 4 giây &bull; Giữ hơi 7 giây &bull; Thở dài bằng miệng 8 giây
+        </p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="relative z-10 w-full text-center py-6 text-xs text-slate-600 border-t border-white/5 flex flex-col items-center gap-1.5">
+    <div>Chốn Bình Yên &bull; Nơi trút bỏ gánh nặng và thắp sáng niềm tin 🌿</div>
+  </footer>
+
+  <script>
+    /* ==========================================================================
+       SYNTHESIZED PROCEDURAL WEB AUDIO (100% Offline, Zero Missing Assets)
+       ========================================================================== */
+    let audioCtx = null;
+    let masterGain = null;
+    let isMasterPlaying = false;
+
+    const SOUNDS = [
+      { id: 'riverSound', name: 'Tiếng suối & nước chảy', icon: 'droplets', color: 'teal', node: null, gain: null, volume: 0.6, type: 'river-stream' },
+      { id: 'rain', name: 'Mưa rào dịu êm', icon: 'cloud-rain', color: 'sky', node: null, gain: null, volume: 0.0, type: 'pink-noise-filter' },
+      { id: 'fire', name: 'Lửa trại ấm cúng', icon: 'flame', color: 'amber', node: null, gain: null, volume: 0.0, type: 'crackle-fire' },
+      { id: 'ocean', name: 'Sóng biển đêm', icon: 'waves', color: 'teal', node: null, gain: null, volume: 0.45, type: 'ocean-waves' },
+      { id: 'wind', name: 'Gió qua đồi thông', icon: 'wind', color: 'cyan', node: null, gain: null, volume: 0.35, type: 'wind-sweep' },
+      { id: 'chimes', name: 'Chuông gió pha lê', icon: 'bell', color: 'purple', node: null, gain: null, volume: 0.4, type: 'wind-chimes' },
+      { id: 'lofi', name: 'Hợp âm Lofi Jazz', icon: 'disc', color: 'indigo', node: null, gain: null, volume: 0.5, type: 'lofi-drone' },
+      { id: 'keyboard', name: 'Gõ phím lách cách', icon: 'keyboard', color: 'emerald', node: null, gain: null, volume: 0.0, type: 'typing-sound' },
+    ];
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0.75, audioCtx.currentTime);
+        masterGain.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function createPinkNoiseBuffer(ctx, seconds = 5) {
+      const bufferSize = ctx.sampleRate * seconds;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+        b6 = white * 0.115926;
+      }
+      return buffer;
+    }
+
+    function startRiverStreamSynth() {
+      const pBuffer = createPinkNoiseBuffer(audioCtx, 6);
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = pBuffer;
+      noise.loop = true;
+
+      const lowpass = audioCtx.createBiquadFilter();
+      lowpass.type = 'lowpass';
+      lowpass.frequency.setValueAtTime(800, audioCtx.currentTime);
+
+      const bandpass = audioCtx.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.frequency.setValueAtTime(450, audioCtx.currentTime);
+      bandpass.Q.setValueAtTime(2.2, audioCtx.currentTime);
+
+      const lfo = audioCtx.createOscillator();
+      lfo.frequency.setValueAtTime(0.3, audioCtx.currentTime);
+      const lfoGain = audioCtx.createGain();
+      lfoGain.gain.setValueAtTime(120, audioCtx.currentTime);
+      lfo.connect(lfoGain);
+      lfoGain.connect(bandpass.frequency);
+
+      const outputGain = audioCtx.createGain();
+      outputGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+      noise.connect(lowpass);
+      lowpass.connect(bandpass);
+      bandpass.connect(outputGain);
+      outputGain.connect(masterGain);
+
+      noise.start();
+      lfo.start();
+      return { gain: outputGain, stop: () => { noise.stop(); lfo.stop(); } };
+    }
+
+    function startRainSynth() {
+      const pBuffer = createPinkNoiseBuffer(audioCtx, 6);
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = pBuffer;
+      noise.loop = true;
+
+      const lowpass = audioCtx.createBiquadFilter();
+      lowpass.type = 'lowpass';
+      lowpass.frequency.setValueAtTime(1100, audioCtx.currentTime);
+
+      const highpass = audioCtx.createBiquadFilter();
+      highpass.type = 'highpass';
+      highpass.frequency.setValueAtTime(320, audioCtx.currentTime);
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+      noise.connect(highpass);
+      highpass.connect(lowpass);
+      lowpass.connect(gain);
+      gain.connect(masterGain);
+
+      noise.start();
+      return { gain, stop: () => { noise.stop(); } };
+    }
+
+    function startFireSynth() {
+      const pBuffer = createPinkNoiseBuffer(audioCtx, 4);
+      const roarNoise = audioCtx.createBufferSource();
+      roarNoise.buffer = pBuffer;
+      roarNoise.loop = true;
+
+      const roarFilter = audioCtx.createBiquadFilter();
+      roarFilter.type = 'lowpass';
+      roarFilter.frequency.setValueAtTime(220, audioCtx.currentTime);
+
+      const roarGain = audioCtx.createGain();
+      roarGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      roarNoise.connect(roarFilter);
+      roarFilter.connect(roarGain);
+
+      const crackleGain = audioCtx.createGain();
+      crackleGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+
+      const outputGain = audioCtx.createGain();
+      outputGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+      roarGain.connect(outputGain);
+      crackleGain.connect(outputGain);
+      outputGain.connect(masterGain);
+
+      roarNoise.start();
+
+      let crackleActive = true;
+      function triggerCrackle() {
+        if (!crackleActive || !audioCtx) return;
+        try {
+          const osc = audioCtx.createOscillator();
+          const popGain = audioCtx.createGain();
+          osc.type = Math.random() > 0.5 ? 'triangle' : 'sine';
+          osc.frequency.setValueAtTime(300 + Math.random() * 2500, audioCtx.currentTime);
+          
+          popGain.gain.setValueAtTime(0.12 * Math.random(), audioCtx.currentTime);
+          popGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04 + Math.random() * 0.05);
+
+          osc.connect(popGain);
+          popGain.connect(crackleGain);
+
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.1);
+        } catch(e) {}
+        setTimeout(triggerCrackle, 50 + Math.random() * 250);
+      }
+      triggerCrackle();
+
+      return {
+        gain: outputGain,
+        stop: () => { crackleActive = false; roarNoise.stop(); }
+      };
+    }
+
+    function startOceanSynth() {
+      const pBuffer = createPinkNoiseBuffer(audioCtx, 6);
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = pBuffer;
+      noise.loop = true;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(400, audioCtx.currentTime);
+
+      const lfo = audioCtx.createOscillator();
+      lfo.frequency.setValueAtTime(0.15, audioCtx.currentTime);
+
+      const lfoGain = audioCtx.createGain();
+      lfoGain.gain.setValueAtTime(320, audioCtx.currentTime);
+
+      lfo.connect(lfoGain);
+      lfoGain.connect(filter.frequency);
+
+      const outputGain = audioCtx.createGain();
+      outputGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+      noise.connect(filter);
+      filter.connect(outputGain);
+      outputGain.connect(masterGain);
+
+      noise.start();
+      lfo.start();
+      return { gain: outputGain, stop: () => { noise.stop(); lfo.stop(); } };
+    }
+
+    function startWindSynth() {
+      const pBuffer = createPinkNoiseBuffer(audioCtx, 6);
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = pBuffer;
+      noise.loop = true;
+
+      const bandpass = audioCtx.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.frequency.setValueAtTime(380, audioCtx.currentTime);
+      bandpass.Q.setValueAtTime(4.0, audioCtx.currentTime);
+
+      const lfo = audioCtx.createOscillator();
+      lfo.frequency.setValueAtTime(0.08, audioCtx.currentTime);
+
+      const lfoGain = audioCtx.createGain();
+      lfoGain.gain.setValueAtTime(250, audioCtx.currentTime);
+
+      lfo.connect(lfoGain);
+      lfoGain.connect(bandpass.frequency);
+
+      const outputGain = audioCtx.createGain();
+      outputGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+      noise.connect(bandpass);
+      bandpass.connect(outputGain);
+      outputGain.connect(masterGain);
+
+      noise.start();
+      lfo.start();
+      return { gain: outputGain, stop: () => { noise.stop(); lfo.stop(); } };
+    }
+
+    function startChimesSynth() {
+      const outputGain = audioCtx.createGain();
+      outputGain.gain.setValueAtTime(0, audioCtx.currentTime);
+      outputGain.connect(masterGain);
+
+      const frequencies = [587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66];
+      let active = true;
+
+      function ringOneChime() {
+        if (!active || !audioCtx) return;
+        try {
+          const freq = frequencies[Math.floor(Math.random() * frequencies.length)];
+          const osc = audioCtx.createOscillator();
+          const chimeGain = audioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+          chimeGain.gain.setValueAtTime(0, audioCtx.currentTime);
+          chimeGain.gain.linearRampToValueAtTime(0.18, audioCtx.currentTime + 0.02);
+          chimeGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3.5);
+
+          osc.connect(chimeGain);
+          chimeGain.connect(outputGain);
+
+          osc.start();
+          osc.stop(audioCtx.currentTime + 3.8);
+        } catch(e) {}
+        setTimeout(ringOneChime, 1400 + Math.random() * 2600);
+      }
+      ringOneChime();
+      return { gain: outputGain, stop: () => { active = false; } };
+    }
+
+    function startLofiSynth() {
+      const outputGain = audioCtx.createGain();
+      outputGain.gain.setValueAtTime(0, audioCtx.currentTime);
+      outputGain.connect(masterGain);
+
+      const chordNotes = [
+        [174.61, 220.00, 261.63, 329.63], // Fmaj7
+        [220.00, 261.63, 329.63, 392.00], // Am7
+        [146.83, 220.00, 261.63, 349.23], // Dm7
+      ];
+
+      let chordIndex = 0;
+      let active = true;
+
+      function playNextChord() {
+        if (!active || !audioCtx) return;
+        const currentChord = chordNotes[chordIndex % chordNotes.length];
+        chordIndex++;
+
+        currentChord.forEach(freq => {
+          try {
+            const osc = audioCtx.createOscillator();
+            const noteGain = audioCtx.createGain();
+            const noteFilter = audioCtx.createBiquadFilter();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            noteFilter.type = 'lowpass';
+            noteFilter.frequency.setValueAtTime(480, audioCtx.currentTime);
+
+            noteGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+            noteGain.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 2.0);
+            noteGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 6.8);
+
+            osc.connect(noteFilter);
+            noteFilter.connect(noteGain);
+            noteGain.connect(outputGain);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 7.0);
+          } catch(e) {}
+        });
+
+        setTimeout(playNextChord, 6200);
+      }
+      playNextChord();
+      return { gain: outputGain, stop: () => { active = false; } };
+    }
+
+    function startTypingSynth() {
+      const outputGain = audioCtx.createGain();
+      outputGain.gain.setValueAtTime(0, audioCtx.currentTime);
+      outputGain.connect(masterGain);
+
+      let active = true;
+      function clickKey() {
+        if (!active || !audioCtx) return;
+        try {
+          const osc = audioCtx.createOscillator();
+          const keyGain = audioCtx.createGain();
+          const filter = audioCtx.createBiquadFilter();
+
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1400 + Math.random() * 800, audioCtx.currentTime);
+          filter.Q.setValueAtTime(3, audioCtx.currentTime);
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(120 + Math.random() * 80, audioCtx.currentTime);
+
+          keyGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+          keyGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.035);
+
+          osc.connect(filter);
+          filter.connect(keyGain);
+          keyGain.connect(outputGain);
+
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.05);
+        } catch(e) {}
+
+        const delay = Math.random() > 0.8 ? 500 + Math.random() * 600 : 120 + Math.random() * 200;
+        setTimeout(clickKey, delay);
+      }
+      clickKey();
+      return { gain: outputGain, stop: () => { active = false; } };
+    }
+
+    function renderSoundCards() {
+      const container = document.getElementById('soundCardContainer');
+      container.innerHTML = SOUNDS.map(sound => `
+        <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between gap-4 border border-white/5 hover:border-white/15 transition group">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-${sound.color}-300 group-hover:scale-105 transition">
+                <i data-lucide="${sound.icon}" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-medium text-slate-200">${sound.name}</h4>
+                <span id="label-status-${sound.id}" class="text-[11px] text-slate-500">Đang tắt</span>
+              </div>
+            </div>
+            
+            <button onclick="toggleSingleSound('${sound.id}')" id="btn-toggle-${sound.id}" class="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition">
+              <i data-lucide="power" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3 pt-1">
+            <i data-lucide="volume-1" class="w-3.5 h-3.5 text-slate-500"></i>
+            <input type="range" min="0" max="1" step="0.01" value="${sound.volume}" 
+              id="slider-${sound.id}"
+              oninput="handleVolumeChange('${sound.id}', this.value)"
+              class="w-full h-1.5 custom-slider bg-slate-800 rounded-lg cursor-pointer">
+            <span id="vol-num-${sound.id}" class="text-[11px] text-slate-400 w-8 text-right font-mono">${Math.round(sound.volume * 100)}%</span>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function ensureSoundInstantiated(sound) {
+      if (!sound.node) {
+        switch(sound.type) {
+          case 'river-stream': sound.node = startRiverStreamSynth(); break;
+          case 'pink-noise-filter': sound.node = startRainSynth(); break;
+          case 'crackle-fire': sound.node = startFireSynth(); break;
+          case 'ocean-waves': sound.node = startOceanSynth(); break;
+          case 'wind-sweep': sound.node = startWindSynth(); break;
+          case 'wind-chimes': sound.node = startChimesSynth(); break;
+          case 'lofi-drone': sound.node = startLofiSynth(); break;
+          case 'typing-sound': sound.node = startTypingSynth(); break;
+        }
+      }
+    }
+
+    function handleVolumeChange(id, val) {
+      initAudioContext();
+      const sound = SOUNDS.find(s => s.id === id);
+      if (!sound) return;
+      sound.volume = parseFloat(val);
+      document.getElementById(`vol-num-${id}`).textContent = `${Math.round(sound.volume * 100)}%`;
+
+      ensureSoundInstantiated(sound);
+      if (sound.node && isMasterPlaying) {
+        sound.node.gain.gain.setValueAtTime(sound.volume, audioCtx.currentTime);
+      }
+      updateSoundUI(sound);
+    }
+
+    function toggleSingleSound(id) {
+      initAudioContext();
+      if (!isMasterPlaying) {
+        toggleMasterAudio(true);
+      }
+      const sound = SOUNDS.find(s => s.id === id);
+      if (!sound) return;
+
+      ensureSoundInstantiated(sound);
+
+      if (sound.volume > 0) {
+        sound.previousVolume = sound.volume;
+        sound.volume = 0;
+      } else {
+        sound.volume = sound.previousVolume || 0.5;
+      }
+
+      document.getElementById(`slider-${id}`).value = sound.volume;
+      document.getElementById(`vol-num-${id}`).textContent = `${Math.round(sound.volume * 100)}%`;
+      if (sound.node) {
+        sound.node.gain.gain.setValueAtTime(sound.volume, audioCtx.currentTime);
+      }
+      updateSoundUI(sound);
+    }
+
+    function updateSoundUI(sound) {
+      const label = document.getElementById(`label-status-${sound.id}`);
+      const btn = document.getElementById(`btn-toggle-${sound.id}`);
+      if (!label || !btn) return;
+
+      if (sound.volume > 0 && isMasterPlaying) {
+        label.textContent = 'Đang phát';
+        label.className = 'text-[11px] text-amber-400 font-medium';
+        btn.classList.add('bg-amber-500/20', 'text-amber-300', 'border', 'border-amber-500/30');
+      } else {
+        label.textContent = 'Đang tắt';
+        label.className = 'text-[11px] text-slate-500';
+        btn.classList.remove('bg-amber-500/20', 'text-amber-300', 'border', 'border-amber-500/30');
+      }
+    }
+
+    function toggleMasterAudio(forceState) {
+      initAudioContext();
+      isMasterPlaying = forceState !== undefined ? forceState : !isMasterPlaying;
+
+      const btnText = document.getElementById('masterPlayText');
+      const icon = document.getElementById('masterPlayIcon');
+
+      if (isMasterPlaying) {
+        btnText.textContent = 'Tạm Dừng';
+        icon.setAttribute('data-lucide', 'pause');
+        SOUNDS.forEach(s => {
+          if (s.volume > 0) {
+            ensureSoundInstantiated(s);
+            s.node.gain.gain.setValueAtTime(s.volume, audioCtx.currentTime);
+          }
+          updateSoundUI(s);
+        });
+      } else {
+        btnText.textContent = 'Bật Âm Thanh';
+        icon.setAttribute('data-lucide', 'play');
+        SOUNDS.forEach(s => {
+          if (s.node) {
+            s.node.gain.gain.setValueAtTime(0, audioCtx.currentTime);
+          }
+          updateSoundUI(s);
+        });
+      }
+      lucide.createIcons();
+    }
+
+    function applyPreset(name) {
+      initAudioContext();
+      if (!isMasterPlaying) toggleMasterAudio(true);
+
+      const presets = {
+        riverTranquil: { riverSound: 0.75, chimes: 0.35, wind: 0.3, lofi: 0.4, ocean: 0.2, rain: 0, fire: 0, keyboard: 0 },
+        rainy: { rain: 0.7, wind: 0.35, chimes: 0.2, fire: 0, ocean: 0, lofi: 0, keyboard: 0, riverSound: 0.2 },
+        campfire: { fire: 0.75, wind: 0.25, lofi: 0.3, rain: 0, ocean: 0, chimes: 0, keyboard: 0, riverSound: 0 },
+        lofi: { lofi: 0.65, riverSound: 0.3, rain: 0.35, keyboard: 0.2, fire: 0, ocean: 0, wind: 0, chimes: 0 },
+        muteAll: { rain: 0, fire: 0, ocean: 0, wind: 0, chimes: 0, lofi: 0, keyboard: 0, riverSound: 0 }
+      };
+
+      const selected = presets[name];
+      if (!selected) return;
+
+      SOUNDS.forEach(s => {
+        const targetVol = selected[s.id] !== undefined ? selected[s.id] : 0;
+        s.volume = targetVol;
+        ensureSoundInstantiated(s);
+        if (s.node && isMasterPlaying) {
+          s.node.gain.gain.setValueAtTime(s.volume, audioCtx.currentTime);
+        }
+        const slider = document.getElementById(`slider-${s.id}`);
+        const volNum = document.getElementById(`vol-num-${s.id}`);
+        if (slider) slider.value = s.volume;
+        if (volNum) volNum.textContent = `${Math.round(s.volume * 100)}%`;
+        updateSoundUI(s);
+      });
+    }
+
+    function switchTab(tabId) {
+      const sections = ['soundscape', 'burner', 'river', 'mindless'];
+      sections.forEach(id => {
+        const sec = document.getElementById(`section-${id}`);
+        const btn = document.getElementById(`tab-btn-${id}`);
+        if (!sec || !btn) return;
+        if (id === tabId) {
+          sec.classList.remove('hidden');
+          sec.classList.add('flex');
+          btn.className = 'tab-button px-5 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 bg-white/10 text-white border border-white/15 shadow-sm';
+        } else {
+          sec.classList.add('hidden');
+          sec.classList.remove('flex');
+          btn.className = 'tab-button px-5 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 bg-transparent text-slate-400 hover:text-slate-200 border border-transparent';
+        }
+      });
+      lucide.createIcons();
+
+      if (tabId === 'river') {
+        setTimeout(resizeRiverCanvas, 80);
+      } else if (tabId === 'mindless') {
+        setTimeout(() => {
+          resizePaperBurnCanvas();
+          resizeStarCanvas();
+        }, 80);
+      }
+    }
+
+    /* ==========================================================================
+       STREAMING_CHUNK:Silent background storage logic for released lanterns...
+       ========================================================================== */
+    const STORAGE_KEY = 'chon_binh_yen_lanterns';
+
+    function setLanternCookie(lanternsData) {
+      try {
+        const jsonStr = encodeURIComponent(JSON.stringify(lanternsData));
+        const date = new Date();
+        date.setTime(date.getTime() + (365 * 24 * 60 * 60 * 1000));
+        document.cookie = `${STORAGE_KEY}=${jsonStr}; expires=${date.toUTCString()}; path=/; SameSite=Lax`;
+      } catch(e) {}
+    }
+
+    function getLanternCookie() {
+      try {
+        const nameEQ = STORAGE_KEY + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+          if (c.indexOf(nameEQ) === 0) {
+            const raw = c.substring(nameEQ.length, c.length);
+            return JSON.parse(decodeURIComponent(raw));
+          }
+        }
+      } catch(e) {}
+      return null;
+    }
+
+    function persistUserLanterns() {
+      const userLanterns = lanterns.filter(l => l.isPrimary).map(l => ({
+        id: l.id,
+        text: l.text,
+        yRatio: l.baseY / (riverHeight || 500),
+        scale: l.scale,
+        createdAt: l.createdAt || Date.now()
+      }));
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(userLanterns));
+      } catch(e) {}
+      setLanternCookie(userLanterns);
+      updateLanternCountUI();
+    }
+
+    function loadPersistedLanterns() {
+      let saved = null;
+      try {
+        const local = localStorage.getItem(STORAGE_KEY);
+        if (local) saved = JSON.parse(local);
+      } catch(e) {}
+
+      if (!saved) {
+        saved = getLanternCookie();
+      }
+
+      return Array.isArray(saved) ? saved : [];
+    }
+
+    const affirmations = [
+      "Mọi chuyện rồi cũng sẽ trôi đi như dòng nước mát lành. Hãy thương lấy chính mình.",
+      "Bạn đã kiên cường vượt qua tất cả những ngày giông bão nhất. Hôm nay bạn được quyền nghỉ ngơi.",
+      "Không cần phải kiểm soát mọi thứ. Hãy để ngọn đèn lồng mang gánh nặng này trôi xa.",
+      "Thả lỏng đôi vai, hít một hơi sâu... Bạn đã làm rất tốt ngày hôm nay rồi.",
+      "Muộn phiền này giờ đã hóa tro tàn và trôi xa. Đêm nay hãy ngủ một giấc thật ngon nhé."
+    ];
+
+    const worryInput = document.getElementById('worryInput');
+    worryInput.addEventListener('input', () => {
+      const words = worryInput.value.trim() ? worryInput.value.trim().split(/\s+/).length : 0;
+      document.getElementById('worryCharCount').textContent = `${words} từ`;
+    });
+
+    function releaseWorry(mode) {
+      const text = worryInput.value.trim();
+      if (!text) {
+        worryInput.placeholder = "Hãy viết vài dòng ở đây trước khi buông bỏ bạn nhé...";
+        worryInput.focus();
+        return;
+      }
+
+      if (mode === 'lantern') {
+        launchBoxLantern(text);
+        return;
+      }
+
+      const canvas = document.getElementById('burnCanvas');
+      const rect = worryInput.getBoundingClientRect();
+      const parentRect = canvas.parentElement.getBoundingClientRect();
+
+      canvas.width = parentRect.width;
+      canvas.height = parentRect.height;
+      const ctx = canvas.getContext('2d');
+
+      const particles = [];
+      const particleCount = mode === 'burn' ? 180 : 130;
+      const startX = rect.left - parentRect.left + rect.width / 2;
+      const startY = rect.top - parentRect.top + rect.height / 2;
+
+      for (let i = 0; i < particleCount; i++) {
+        let color = mode === 'burn' 
+          ? (Math.random() > 0.4 ? 'rgba(251, 146, 60,' : 'rgba(239, 68, 68,')
+          : (Math.random() > 0.5 ? 'rgba(192, 132, 252,' : 'rgba(244, 244, 245,');
+
+        particles.push({
+          x: startX + (Math.random() - 0.5) * rect.width * 0.8,
+          y: startY + (Math.random() - 0.5) * rect.height * 0.6,
+          vx: (Math.random() - 0.5) * (mode === 'burn' ? 3 : 1.5),
+          vy: mode === 'burn' ? -Math.random() * 4 - 1 : -Math.random() * 2 - 0.5,
+          size: Math.random() * 4 + 1,
+          alpha: 1,
+          decay: Math.random() * 0.015 + 0.008,
+          colorBase: color
+        });
+      }
+
+      worryInput.style.transition = 'opacity 0.8s ease, filter 0.8s ease, transform 0.8s ease';
+      worryInput.style.opacity = '0';
+      worryInput.style.filter = 'blur(8px)';
+      worryInput.style.transform = 'scale(0.96)';
+
+      playReleaseSound(mode);
+
+      function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let hasAlive = false;
+
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.alpha -= p.decay;
+          if (p.alpha > 0) {
+            hasAlive = true;
+            ctx.fillStyle = `${p.colorBase} ${p.alpha})`;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = p.colorBase.replace(',', ', 0.8)');
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+
+        if (hasAlive) {
+          requestAnimationFrame(animateParticles);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          showAffirmation();
+        }
+      }
+      requestAnimationFrame(animateParticles);
+    }
+
+    function playReleaseSound(mode) {
+      if (!audioCtx) initAudioContext();
+      try {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = mode === 'burn' ? 'triangle' : 'sine';
+        osc.frequency.setValueAtTime(mode === 'burn' ? 180 : 380, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(mode === 'burn' ? 60 : 720, audioCtx.currentTime + 1.2);
+
+        g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.4);
+
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 1.5);
+      } catch(e) {}
+    }
+
+    function showAffirmation() {
+      worryInput.parentElement.classList.add('hidden');
+      document.getElementById('btnBurn').parentElement.classList.add('hidden');
+      
+      const affirmationBox = document.getElementById('affirmationBox');
+      const affirmationText = document.getElementById('affirmationText');
+      
+      const randomAff = affirmations[Math.floor(Math.random() * affirmations.length)];
+      affirmationText.textContent = `"${randomAff}"`;
+      
+      affirmationBox.classList.remove('hidden');
+      affirmationBox.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function resetWorryBox() {
+      worryInput.value = '';
+      document.getElementById('worryCharCount').textContent = '0 từ';
+      worryInput.style.opacity = '1';
+      worryInput.style.filter = 'none';
+      worryInput.style.transform = 'none';
+
+      worryInput.parentElement.classList.remove('hidden');
+      document.getElementById('btnBurn').parentElement.classList.remove('hidden');
+      
+      const affirmationBox = document.getElementById('affirmationBox');
+      affirmationBox.classList.add('hidden');
+      affirmationBox.classList.remove('flex');
+    }
+
+    /* ==========================================================================
+       STREAMING_CHUNK:Simulating floating traditional wooden box lanterns...
+       ========================================================================== */
+    const riverCanvas = document.getElementById('riverCanvas');
+    let riverCtx = null;
+    let riverWidth = 0;
+    let riverHeight = 0;
+    let riverWaveTime = 0;
+    let activeInspectedLantern = null;
+
+    let lanterns = [];
+    let waterRipples = [];
+    let waterSplashDrops = [];
+    let floatingSparkles = [];
+
+    function resizeRiverCanvas() {
+      const container = document.getElementById('riverContainer');
+      if (!container || !riverCanvas) return;
+      riverWidth = riverCanvas.width = container.clientWidth;
+      riverHeight = riverCanvas.height = container.clientHeight;
+      riverCtx = riverCanvas.getContext('2d');
+    }
+    window.addEventListener('resize', resizeRiverCanvas);
+
+    function seedInitialLanterns() {
+      const savedUserLanterns = loadPersistedLanterns();
+      const baseHeight = riverHeight || 500;
+
+      if (savedUserLanterns.length > 0) {
+        savedUserLanterns.forEach((saved, index) => {
+          const calculatedY = saved.yRatio ? saved.yRatio * baseHeight : (baseHeight * 0.38 + (index % 3) * 60);
+          createBoxLantern(saved.text, 50 + index * 120, calculatedY, true, saved.id, saved.createdAt);
+        });
+      }
+
+      const defaultThoughts = [
+        "Những áp lực vô hình từ công việc và deadline...",
+        "Nỗi sợ rằng mình đang bị tụt lại phía sau người khác...",
+        "Cảm giác cô đơn khi không thể nói ra cùng ai...",
+        "Sự tự trách bản thân vì những điều chưa trọn vẹn..."
+      ];
+
+      defaultThoughts.forEach((thought, idx) => {
+        createBoxLantern(thought, 60 + idx * 180, 180 + (idx % 3) * 70, false);
+      });
+
+      for (let i = 0; i < 8; i++) {
+        floatingSparkles.push({
+          x: Math.random() * 800,
+          y: Math.random() * 250 + 120,
+          speed: 0.15 + Math.random() * 0.15,
+          radius: 3.5 + Math.random() * 2.5,
+          glowHue: 35 + Math.random() * 20
+        });
+      }
+      updateLanternCountUI();
+    }
+
+    function createBoxLantern(thoughtText, initialX = -60, initialY = null, isUserPrimary = false, existingId = null, existingDate = null) {
+      const baseHeight = riverHeight || 500;
+      const y = initialY !== null ? initialY : (baseHeight * 0.35 + Math.random() * (baseHeight * 0.45));
+      const newLantern = {
+        id: existingId || ('lantern_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4)),
+        text: thoughtText,
+        x: initialX,
+        y: y,
+        baseY: y,
+        speed: 0.28 + Math.random() * 0.22,
+        scale: 0.95 + Math.random() * 0.25,
+        rotation: 0,
+        bobPhase: Math.random() * Math.PI * 2,
+        flameFlicker: Math.random() * 10,
+        glowColor: isUserPrimary ? 'rgba(251, 191, 36, 0.95)' : 'rgba(253, 186, 116, 0.85)',
+        paperWarmth: isUserPrimary ? '#fef3c7' : '#ffedd5',
+        woodColor: '#78350f',
+        tasselColor: isUserPrimary ? '#ef4444' : '#f97316',
+        isPrimary: isUserPrimary,
+        createdAt: existingDate || Date.now(),
+        impulseY: 0,
+        impulseTilt: 0,
+        tiltVelocity: 0
+      };
+      lanterns.push(newLantern);
+      updateLanternCountUI();
+      return newLantern;
+    }
+
+    function updateLanternCountUI() {
+      const badge = document.getElementById('riverLanternBadge');
+      const totalText = document.getElementById('lanternCountText');
+      const myText = document.getElementById('myLanternCountText');
+      
+      const userCount = lanterns.filter(l => l.isPrimary).length;
+      if (totalText) totalText.textContent = lanterns.length;
+      if (myText) myText.textContent = userCount;
+      if (badge) {
+        if (userCount > 0) badge.classList.remove('hidden');
+        else badge.classList.add('hidden');
+      }
+    }
+
+    function launchBoxLantern(worryText) {
+      initAudioContext();
+      if (!isMasterPlaying) {
+        toggleMasterAudio(true);
+        applyPreset('riverTranquil');
+      }
+
+      const lantern = createBoxLantern(worryText, -40, null, true);
+      persistUserLanterns();
+
+      playWaterSplashTone(1.2);
+
+      worryInput.value = '';
+      document.getElementById('worryCharCount').textContent = '0 từ';
+      switchTab('river');
+
+      setTimeout(() => {
+        addWaterRipple(lantern.x + 30, lantern.y, 1.4);
+      }, 300);
+    }
+
+    function clearUserLanterns() {
+      lanterns = lanterns.filter(l => !l.isPrimary);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch(e) {}
+      document.cookie = `${STORAGE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      
+      updateLanternCountUI();
+      closeLanternModal();
+      playWaterSplashTone(0.8);
+    }
+
+    function deleteCurrentLantern() {
+      if (!activeInspectedLantern) return;
+      lanterns = lanterns.filter(l => l.id !== activeInspectedLantern.id);
+      persistUserLanterns();
+      closeLanternModal();
+      playWaterSplashTone(0.8);
+    }
+
+    function spawnAmbientLantern() {
+      const calmingThoughts = [
+        "Xin gửi lại âu lo cho dòng nước, giữ lại sự bình yên",
+        "Tôi cho phép bản thân được nghỉ ngơi không vội vã",
+        "Ngày hôm nay đến đây là trọn vẹn rồi",
+        "Mọi bão giông rồi cũng hóa dịu êm"
+      ];
+      const thought = calmingThoughts[Math.floor(Math.random() * calmingThoughts.length)];
+      createBoxLantern(thought, -50, null, false);
+      playWaterSplashTone(1.0);
+    }
+
+    function playWaterSplashTone(intensity = 1.0) {
+      if (!audioCtx) initAudioContext();
+      try {
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const filter = audioCtx.createBiquadFilter();
+        const dropGain = audioCtx.createGain();
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1400, audioCtx.currentTime);
+        filter.Q.setValueAtTime(3.8, audioCtx.currentTime);
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(380 + Math.random() * 80, audioCtx.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(840 + Math.random() * 180, audioCtx.currentTime + 0.18);
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(620 + Math.random() * 90, audioCtx.currentTime);
+        osc2.frequency.exponentialRampToValueAtTime(1260 + Math.random() * 120, audioCtx.currentTime + 0.14);
+
+        const vol = Math.min(0.24, 0.14 * intensity);
+        dropGain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        dropGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.75);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(dropGain);
+        dropGain.connect(masterGain);
+
+        osc1.start();
+        osc2.start();
+        osc1.stop(audioCtx.currentTime + 0.8);
+        osc2.stop(audioCtx.currentTime + 0.8);
+      } catch(e) {}
+    }
+
+    function addWaterRipple(x, y, power = 1.0) {
+      playWaterSplashTone(power);
+
+      const ringDelays = [0, 90, 180, 270];
+      ringDelays.forEach((delay, idx) => {
+        setTimeout(() => {
+          waterRipples.push({
+            x, y,
+            radius: 5,
+            maxRadius: (200 + idx * 38) * power,
+            alpha: 0.95 - idx * 0.12,
+            lineWidth: (3.8 - idx * 0.7) * Math.min(power, 1.4),
+            growth: (2.4 + idx * 0.5) * power,
+            colorHue: 172 + (idx * 10)
+          });
+        }, delay);
+      });
+
+      const splashCount = Math.floor(14 * power);
+      for (let i = 0; i < splashCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = (2.2 + Math.random() * 4.5) * power;
+        waterSplashDrops.push({
+          x: x + (Math.random() - 0.5) * 12,
+          y: y + (Math.random() - 0.5) * 8,
+          vx: Math.cos(angle) * speed * 0.85,
+          vy: -Math.abs(Math.sin(angle)) * speed * 1.35 - 1.8,
+          gravity: 0.28,
+          radius: Math.random() * 2.8 + 1.2,
+          alpha: 0.95,
+          decay: Math.random() * 0.02 + 0.018,
+          colorHue: 168 + Math.floor(Math.random() * 30)
+        });
+      }
+
+      const impactRadius = 260 * power;
+      lanterns.forEach(l => {
+        const dx = l.x - x;
+        const dy = l.y - y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < impactRadius) {
+          const factor = (1 - dist / impactRadius);
+          const pushForce = factor * 26 * power;
+          l.impulseY = -pushForce;
+          const side = dx >= 0 ? 1 : -1;
+          l.tiltVelocity = side * factor * 0.35 * power;
+        }
+      });
+    }
+
+    riverCanvas.addEventListener('pointerdown', (e) => {
+      const rect = riverCanvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      let clickedLantern = null;
+      for (let i = lanterns.length - 1; i >= 0; i--) {
+        const l = lanterns[i];
+        const lanternSize = 40 * l.scale;
+        if (
+          clickX >= l.x - lanternSize &&
+          clickX <= l.x + lanternSize &&
+          clickY >= l.y - lanternSize &&
+          clickY <= l.y + lanternSize
+        ) {
+          clickedLantern = l;
+          break;
+        }
+      }
+
+      if (clickedLantern) {
+        openLanternModal(clickedLantern);
+        addWaterRipple(clickedLantern.x, clickedLantern.y, 1.25);
+      } else {
+        addWaterRipple(clickX, clickY, 1.35);
+      }
+    });
+
+    function openLanternModal(lantern) {
+      activeInspectedLantern = lantern;
+      const modal = document.getElementById('lanternDetailModal');
+      const textElem = document.getElementById('modalThoughtText');
+      const dateElem = document.getElementById('modalLanternDate');
+      const deleteBtn = document.getElementById('modalDeleteLanternBtn');
+
+      textElem.textContent = `"${lantern.text}"`;
+      if (lantern.createdAt) {
+        const d = new Date(lantern.createdAt);
+        dateElem.textContent = `Thả trôi vào: ${d.toLocaleTimeString('vi-VN')} - ${d.toLocaleDateString('vi-VN')}`;
+      } else {
+        dateElem.textContent = 'Đèn lồng an yên trôi theo dòng sông';
+      }
+
+      if (lantern.isPrimary) {
+        deleteBtn.classList.remove('hidden');
+      } else {
+        deleteBtn.classList.add('hidden');
+      }
+
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeLanternModal() {
+      const modal = document.getElementById('lanternDetailModal');
+      modal.classList.add('hidden');
+      activeInspectedLantern = null;
+    }
+
+    /* ==========================================================================
+       STREAMING_CHUNK:Drawing realistic floating wood-framed paper box lanterns...
+       ========================================================================== */
+    function drawFloatingBoxLantern(ctx, lantern) {
+      ctx.save();
+      ctx.translate(lantern.x, lantern.y);
+      ctx.rotate(lantern.rotation + lantern.impulseTilt);
+      ctx.scale(lantern.scale, lantern.scale);
+
+      lantern.flameFlicker += 0.08;
+      const flicker = Math.sin(lantern.flameFlicker) * 1.5;
+
+      const boxW = 34;
+      const boxH = 42;
+      const halfW = boxW / 2;
+
+      // 1. Water Surface Light Reflection (Vệt phản quang ấm áp trên mặt sông)
+      ctx.save();
+      ctx.scale(1.2, 0.38);
+      const reflectionGrad = ctx.createRadialGradient(0, boxH * 0.9, 3, 0, boxH * 0.9, 48);
+      reflectionGrad.addColorStop(0, lantern.isPrimary ? 'rgba(251, 191, 36, 0.55)' : 'rgba(249, 115, 22, 0.42)');
+      reflectionGrad.addColorStop(0.6, 'rgba(245, 158, 11, 0.15)');
+      reflectionGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = reflectionGrad;
+      ctx.beginPath();
+      ctx.arc(0, boxH * 0.9, 48, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // 2. Hanging Tassel (Tua rua đỏ/cam lay nhẹ bên dưới)
+      const tasselSway = Math.sin(lantern.bobPhase * 1.2) * 3;
+      ctx.strokeStyle = lantern.tasselColor;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(0, 4);
+      ctx.quadraticCurveTo(tasselSway * 0.5, 10, tasselSway, 17);
+      ctx.stroke();
+
+      ctx.fillStyle = lantern.tasselColor;
+      ctx.beginPath();
+      ctx.arc(tasselSway, 18, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. Ambient Lantern Glow Halo (Vầng hào quang ấm áp bao quanh lồng đèn)
+      const haloGrad = ctx.createRadialGradient(0, -boxH * 0.45, 6, 0, -boxH * 0.45, 62);
+      haloGrad.addColorStop(0, lantern.glowColor);
+      haloGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.25)');
+      haloGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = haloGrad;
+      ctx.beginPath();
+      ctx.arc(0, -boxH * 0.45, 62, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. Floating Wooden Raft Base (Đế gỗ nổi trên mặt nước)
+      ctx.fillStyle = '#451a03';
+      ctx.beginPath();
+      ctx.roundRect(-halfW - 4, 0, boxW + 8, 5, 2);
+      ctx.fill();
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // 5. Translucent Rice Paper Body (Thân đèn giấy mờ phát sáng)
+      const paperGrad = ctx.createLinearGradient(-halfW, -boxH, halfW, 0);
+      paperGrad.addColorStop(0, '#fffbeb');
+      paperGrad.addColorStop(0.3, lantern.paperWarmth);
+      paperGrad.addColorStop(0.7, '#fde68a');
+      paperGrad.addColorStop(1, '#f59e0b');
+
+      ctx.fillStyle = paperGrad;
+      ctx.shadowColor = '#f59e0b';
+      ctx.shadowBlur = 14;
+      ctx.fillRect(-halfW, -boxH, boxW, boxH);
+
+      // 6. Traditional Wood Frame Lattice & Corner Slats (Khung nẹp gỗ truyền thống)
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = lantern.woodColor;
+
+      // Vertical side pillars
+      ctx.fillRect(-halfW, -boxH, 3, boxH);
+      ctx.fillRect(halfW - 3, -boxH, 3, boxH);
+
+      // Horizontal top and bottom trim
+      ctx.fillRect(-halfW, -boxH, boxW, 3.5);
+      ctx.fillRect(-halfW, -3.5, boxW, 3.5);
+
+      // Delicate window wooden mullion (Thanh chia nan gỗ chữ thập)
+      ctx.fillStyle = 'rgba(120, 53, 15, 0.75)';
+      ctx.fillRect(-halfW, -boxH * 0.52, boxW, 1.8);
+      ctx.fillRect(-0.9, -boxH, 1.8, boxH);
+
+      // Decorative top wooden crest (Mái gỗ nhỏ trên chóp đèn)
+      ctx.fillStyle = '#451a03';
+      ctx.beginPath();
+      ctx.moveTo(-halfW - 2, -boxH);
+      ctx.lineTo(-halfW + 3, -boxH - 3);
+      ctx.lineTo(halfW - 3, -boxH - 3);
+      ctx.lineTo(halfW + 2, -boxH);
+      ctx.closePath();
+      ctx.fill();
+
+      // 7. Internal Candle Core & Dancing Flame (Ngọn nến trung tâm bập bùng)
+      const candleY = -boxH * 0.45;
+      const flameH = 9 + flicker;
+
+      // Outer candle flame
+      ctx.fillStyle = '#f59e0b';
+      ctx.shadowColor = '#fbbf24';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.ellipse(0, candleY - flameH * 0.4, 4, flameH * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // White-hot core
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.ellipse(0, candleY - flameH * 0.35, 1.8, flameH * 0.3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function animateRiverScene() {
+      if (!riverCtx || !riverCanvas) {
+        requestAnimationFrame(animateRiverScene);
+        return;
+      }
+
+      riverWaveTime += 0.02;
+
+      // Twilight Sky Gradient
+      const skyGrad = riverCtx.createLinearGradient(0, 0, 0, riverHeight);
+      skyGrad.addColorStop(0, '#040714');
+      skyGrad.addColorStop(0.35, '#0a1228');
+      skyGrad.addColorStop(0.65, '#0c1d35');
+      skyGrad.addColorStop(1, '#05111d');
+      riverCtx.fillStyle = skyGrad;
+      riverCtx.fillRect(0, 0, riverWidth, riverHeight);
+
+      // Distant night mountain silhouette
+      riverCtx.fillStyle = '#060a17';
+      riverCtx.beginPath();
+      riverCtx.moveTo(0, riverHeight * 0.32);
+      riverCtx.bezierCurveTo(riverWidth * 0.25, riverHeight * 0.28, riverWidth * 0.45, riverHeight * 0.35, riverWidth, riverHeight * 0.30);
+      riverCtx.lineTo(riverWidth, riverHeight);
+      riverCtx.lineTo(0, riverHeight);
+      riverCtx.closePath();
+      riverCtx.fill();
+
+      // Water layers with gentle waves
+      for (let wave = 0; wave < 3; wave++) {
+        riverCtx.beginPath();
+        const waveY = riverHeight * (0.42 + wave * 0.18);
+        riverCtx.moveTo(0, waveY);
+
+        for (let x = 0; x <= riverWidth; x += 15) {
+          const dy = Math.sin(x * 0.008 + riverWaveTime + wave) * (6 + wave * 3) +
+                     Math.cos(x * 0.015 - riverWaveTime * 0.7) * 3;
+          riverCtx.lineTo(x, waveY + dy);
+        }
+
+        riverCtx.lineTo(riverWidth, riverHeight);
+        riverCtx.lineTo(0, riverHeight);
+        riverCtx.closePath();
+
+        const waveGrad = riverCtx.createLinearGradient(0, waveY, 0, riverHeight);
+        if (wave === 0) {
+          waveGrad.addColorStop(0, 'rgba(20, 60, 90, 0.45)');
+          waveGrad.addColorStop(1, 'rgba(7, 26, 45, 0.7)');
+        } else if (wave === 1) {
+          waveGrad.addColorStop(0, 'rgba(13, 80, 110, 0.4)');
+          waveGrad.addColorStop(1, 'rgba(6, 32, 54, 0.8)');
+        } else {
+          waveGrad.addColorStop(0, 'rgba(20, 105, 125, 0.35)');
+          waveGrad.addColorStop(1, 'rgba(4, 18, 32, 0.95)');
+        }
+        riverCtx.fillStyle = waveGrad;
+        riverCtx.fill();
+      }
+
+      // Strong Luminous Concentric Water Ripples
+      for (let r = waterRipples.length - 1; r >= 0; r--) {
+        const rip = waterRipples[r];
+        rip.radius += rip.growth;
+        rip.alpha -= 0.009;
+
+        if (rip.alpha <= 0 || rip.radius >= rip.maxRadius) {
+          waterRipples.splice(r, 1);
+          continue;
+        }
+
+        riverCtx.save();
+        riverCtx.scale(1, 0.42);
+
+        riverCtx.shadowBlur = 18;
+        riverCtx.shadowColor = `hsla(${rip.colorHue}, 90%, 65%, ${rip.alpha * 0.85})`;
+        riverCtx.strokeStyle = `hsla(${rip.colorHue}, 90%, 75%, ${rip.alpha})`;
+        riverCtx.lineWidth = Math.max(1.2, rip.lineWidth * (rip.alpha));
+
+        riverCtx.beginPath();
+        riverCtx.arc(rip.x, rip.y / 0.42, rip.radius, 0, Math.PI * 2);
+        riverCtx.stroke();
+
+        if (rip.radius > 20) {
+          riverCtx.strokeStyle = `hsla(${rip.colorHue - 15}, 90%, 85%, ${rip.alpha * 0.45})`;
+          riverCtx.lineWidth = Math.max(0.8, rip.lineWidth * 0.5);
+          riverCtx.beginPath();
+          riverCtx.arc(rip.x, rip.y / 0.42, rip.radius * 0.84, 0, Math.PI * 2);
+          riverCtx.stroke();
+        }
+
+        riverCtx.restore();
+      }
+
+      // Water Droplets Splash Particles with Gravity
+      for (let d = waterSplashDrops.length - 1; d >= 0; d--) {
+        const drop = waterSplashDrops[d];
+        drop.x += drop.vx;
+        drop.y += drop.vy;
+        drop.vy += drop.gravity;
+        drop.alpha -= drop.decay;
+
+        if (drop.alpha <= 0 || drop.y > riverHeight + 10) {
+          waterSplashDrops.splice(d, 1);
+          continue;
+        }
+
+        riverCtx.save();
+        riverCtx.fillStyle = `hsla(${drop.colorHue}, 95%, 75%, ${drop.alpha})`;
+        riverCtx.shadowBlur = 10;
+        riverCtx.shadowColor = `hsla(${drop.colorHue}, 95%, 70%, ${drop.alpha * 0.9})`;
+        riverCtx.beginPath();
+        riverCtx.arc(drop.x, drop.y, drop.radius, 0, Math.PI * 2);
+        riverCtx.fill();
+        riverCtx.restore();
+      }
+
+      // Floating Ambient Sparkles
+      floatingSparkles.forEach(spark => {
+        spark.x += spark.speed;
+        if (spark.x > riverWidth + 50) spark.x = -30;
+        const bob = Math.sin(riverWaveTime * 2 + spark.x * 0.02) * 4;
+
+        riverCtx.fillStyle = `hsla(${spark.glowHue}, 90%, 65%, 0.8)`;
+        riverCtx.shadowColor = `hsla(${spark.glowHue}, 90%, 65%, 0.9)`;
+        riverCtx.shadowBlur = 16;
+        riverCtx.beginPath();
+        riverCtx.arc(spark.x, spark.y + bob, spark.radius, 0, Math.PI * 2);
+        riverCtx.fill();
+      });
+
+      // Drifting Box Lanterns with Wave Physics
+      lanterns.forEach(l => {
+        l.x += l.speed;
+        l.bobPhase += 0.035;
+
+        l.impulseY *= 0.91;
+        l.impulseTilt += l.tiltVelocity;
+        l.tiltVelocity *= 0.88;
+        l.impulseTilt *= 0.90;
+
+        const waveOffset = Math.sin(l.x * 0.01 + riverWaveTime) * 6;
+        l.y = l.baseY + waveOffset + Math.sin(l.bobPhase) * 3 + l.impulseY;
+        l.rotation = Math.cos(l.x * 0.01 + riverWaveTime) * 0.08;
+
+        drawFloatingBoxLantern(riverCtx, l);
+
+        if (l.x > riverWidth + 80) {
+          l.x = -70;
+          l.baseY = riverHeight * 0.35 + Math.random() * (riverHeight * 0.45);
+        }
+      });
+
+      requestAnimationFrame(animateRiverScene);
+    }
+
+    /* ==========================================================================
+       STREAMING_CHUNK:Implementing slow organic paper burning simulator...
+       ========================================================================== */
+    const paperCanvas = document.getElementById('paperBurnCanvas');
+    let paperCtx = null;
+    let isPaperBurning = false;
+    let paperBurnProgress = 0; // 0 to 1
+    let paperEmberParticles = [];
+    let paperBurnAudioInterval = null;
+
+    function resizePaperBurnCanvas() {
+      const container = document.getElementById('parchmentContainer');
+      if (!container || !paperCanvas) return;
+      paperCanvas.width = container.clientWidth;
+      paperCanvas.height = container.clientHeight;
+      paperCtx = paperCanvas.getContext('2d');
+    }
+    window.addEventListener('resize', resizePaperBurnCanvas);
+
+    function setPaperTrouble(text) {
+      if (isPaperBurning) return;
+      const input = document.getElementById('parchmentInput');
+      input.value = text;
+    }
+
+    function playPaperCrackleSound() {
+      if (!audioCtx) initAudioContext();
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(800 + Math.random() * 1200, audioCtx.currentTime);
+
+        osc.type = Math.random() > 0.4 ? 'triangle' : 'sine';
+        osc.frequency.setValueAtTime(250 + Math.random() * 2200, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.09 * Math.random(), audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05 + Math.random() * 0.08);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGain);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      } catch(e) {}
+    }
+
+    function ignitePaperSlowly() {
+      const input = document.getElementById('parchmentInput');
+      const text = input.value.trim();
+      if (!text) {
+        input.placeholder = "Hãy viết một vài điều bạn muốn buông bỏ trước khi châm lửa...";
+        input.focus();
+        return;
+      }
+      if (isPaperBurning) return;
+
+      initAudioContext();
+      resizePaperBurnCanvas();
+      isPaperBurning = true;
+      paperBurnProgress = 0;
+      paperEmberParticles = [];
+
+      document.getElementById('ignitePaperBtn').disabled = true;
+      document.getElementById('ignitePaperBtn').classList.add('opacity-50', 'cursor-not-allowed');
+
+      // Continuous paper crackling audio loop
+      paperBurnAudioInterval = setInterval(() => {
+        if (isPaperBurning && Math.random() > 0.25) {
+          playPaperCrackleSound();
+        }
+      }, 70);
+
+      animatePaperBurnLoop();
+    }
+
+    function animatePaperBurnLoop() {
+      if (!isPaperBurning) return;
+
+      // Slow organic burn progression (lasts ~8 seconds)
+      paperBurnProgress += 0.0022;
+
+      const w = paperCanvas.width;
+      const h = paperCanvas.height;
+      paperCtx.clearRect(0, 0, w, h);
+
+      const burnFrontY = h - (h + 30) * paperBurnProgress;
+
+      // 1. Black Charred Ash Fill (Vùng giấy đã cháy thành tro đen)
+      paperCtx.fillStyle = 'rgba(15, 10, 8, 0.96)';
+      paperCtx.beginPath();
+      paperCtx.moveTo(0, h);
+
+      for (let x = 0; x <= w; x += 10) {
+        const jag = Math.sin(x * 0.04) * 12 + Math.cos(x * 0.08 + paperBurnProgress * 20) * 8;
+        paperCtx.lineTo(x, burnFrontY + jag);
+      }
+      paperCtx.lineTo(w, h);
+      paperCtx.closePath();
+      paperCtx.fill();
+
+      // 2. Glowing Scorched Ember Edge (Dải viền than hồng cháy âm ỉ)
+      paperCtx.save();
+      paperCtx.shadowBlur = 18;
+      paperCtx.shadowColor = '#f97316';
+      paperCtx.strokeStyle = '#ea580c';
+      paperCtx.lineWidth = 6;
+      paperCtx.beginPath();
+
+      for (let x = 0; x <= w; x += 8) {
+        const jag = Math.sin(x * 0.04) * 12 + Math.cos(x * 0.08 + paperBurnProgress * 20) * 8;
+        if (x === 0) paperCtx.moveTo(x, burnFrontY + jag);
+        else paperCtx.lineTo(x, burnFrontY + jag);
+      }
+      paperCtx.stroke();
+
+      // Bright yellow-hot inner ember seam
+      paperCtx.strokeStyle = '#fef08a';
+      paperCtx.shadowColor = '#fde047';
+      paperCtx.shadowBlur = 10;
+      paperCtx.lineWidth = 2.5;
+      paperCtx.stroke();
+      paperCtx.restore();
+
+      // 3. Spawning Rising Embers, Sparks & Ash Flakes (Tro tàn và tàn lửa bốc lên cao)
+      if (Math.random() > 0.25) {
+        const sparkX = Math.random() * w;
+        const sparkY = burnFrontY + (Math.random() - 0.5) * 20;
+        paperEmberParticles.push({
+          x: sparkX,
+          y: sparkY,
+          vx: (Math.random() - 0.5) * 2,
+          vy: -Math.random() * 3 - 1.2,
+          size: Math.random() * 3.5 + 1.2,
+          alpha: 1,
+          decay: Math.random() * 0.015 + 0.008,
+          isAsh: Math.random() > 0.6
+        });
+      }
+
+      for (let i = paperEmberParticles.length - 1; i >= 0; i--) {
+        const p = paperEmberParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= p.decay;
+
+        if (p.alpha <= 0 || p.y < -20) {
+          paperEmberParticles.splice(i, 1);
+          continue;
+        }
+
+        paperCtx.save();
+        if (p.isAsh) {
+          paperCtx.fillStyle = `rgba(80, 75, 70, ${p.alpha * 0.8})`;
+          paperCtx.beginPath();
+          paperCtx.arc(p.x, p.y, p.size * 1.2, 0, Math.PI * 2);
+          paperCtx.fill();
+        } else {
+          paperCtx.fillStyle = `rgba(251, 146, 60, ${p.alpha})`;
+          paperCtx.shadowColor = '#f97316';
+          paperCtx.shadowBlur = 8;
+          paperCtx.beginPath();
+          paperCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          paperCtx.fill();
+        }
+        paperCtx.restore();
+      }
+
+      // Check completion
+      if (paperBurnProgress < 1.05) {
+        requestAnimationFrame(animatePaperBurnLoop);
+      } else {
+        finishPaperBurn();
+      }
+    }
+
+    function finishPaperBurn() {
+      isPaperBurning = false;
+      clearInterval(paperBurnAudioInterval);
+
+      const successBox = document.getElementById('paperBurnSuccessBox');
+      const quoteElem = document.getElementById('paperSuccessQuote');
+      
+      const randomAff = affirmations[Math.floor(Math.random() * affirmations.length)];
+      quoteElem.textContent = `"${randomAff}"`;
+      
+      successBox.classList.remove('hidden');
+      successBox.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function resetParchmentPaper() {
+      const input = document.getElementById('parchmentInput');
+      input.value = '';
+      input.placeholder = "Viết điều khiến bạn nặng lòng lên trang giấy này...";
+
+      const successBox = document.getElementById('paperBurnSuccessBox');
+      successBox.classList.add('hidden');
+      successBox.classList.remove('flex');
+
+      document.getElementById('ignitePaperBtn').disabled = false;
+      document.getElementById('ignitePaperBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+
+      if (paperCtx) {
+        paperCtx.clearRect(0, 0, paperCanvas.width, paperCanvas.height);
+      }
+      paperBurnProgress = 0;
+      paperEmberParticles = [];
+    }
+
+    /* ==========================================================================
+       STREAMING_CHUNK:Managing Mindful Zen games, star canvas, and breathing...
+       ========================================================================== */
+    function switchZenGame(gameKey) {
+      const games = ['paperBurn', 'stars', 'breath'];
+      games.forEach(key => {
+        const wrapper = document.getElementById(`game-${key}-wrapper`);
+        const tab = document.getElementById(`zen-tab-${key}`);
+        if (key === gameKey) {
+          wrapper.classList.remove('hidden');
+          wrapper.classList.add('flex');
+          tab.className = 'px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-white/10 text-white border border-white/10 transition flex items-center gap-1.5';
+        } else {
+          wrapper.classList.add('hidden');
+          wrapper.classList.remove('flex');
+          tab.className = 'px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-transparent text-slate-400 hover:text-slate-200 border border-transparent transition flex items-center gap-1.5';
+        }
+      });
+      lucide.createIcons();
+
+      if (gameKey === 'paperBurn') {
+        setTimeout(resizePaperBurnCanvas, 60);
+      } else if (gameKey === 'stars') {
+        setTimeout(resizeStarCanvas, 60);
+      }
+    }
+
+    const starCanvas = document.getElementById('interactiveStarCanvas');
+    let starCtx = null;
+    let starsArray = [];
+    const pentatonicNotes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33];
+
+    function resizeStarCanvas() {
+      if (!starCanvas) return;
+      starCanvas.width = starCanvas.parentElement.clientWidth;
+      starCanvas.height = starCanvas.parentElement.clientHeight;
+      starCtx = starCanvas.getContext('2d');
+    }
+    window.addEventListener('resize', resizeStarCanvas);
+
+    function addStar(x, y) {
+      if (!starCtx) resizeStarCanvas();
+      const newStar = {
+        x, y,
+        radius: Math.random() * 3 + 2,
+        maxRing: Math.random() * 35 + 20,
+        ringSize: 2,
+        ringAlpha: 1,
+        alpha: 1,
+        colorHue: Math.floor(Math.random() * 60 + 170)
+      };
+      starsArray.push(newStar);
+      if (starsArray.length > 50) starsArray.shift();
+      playStarChime();
+    }
+
+    function playStarChime() {
+      if (!audioCtx) initAudioContext();
+      try {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        const note = pentatonicNotes[Math.floor(Math.random() * pentatonicNotes.length)];
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(note, audioCtx.currentTime);
+
+        g.gain.setValueAtTime(0, audioCtx.currentTime);
+        g.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
+
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 1.3);
+      } catch(e) {}
+    }
+
+    function clearStarCanvas() {
+      starsArray = [];
+      if (starCtx) starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+    }
+
+    function animateStarCanvas() {
+      if (starCtx && starCanvas) {
+        starCtx.fillStyle = 'rgba(4, 6, 18, 0.2)';
+        starCtx.fillRect(0, 0, starCanvas.width, starCanvas.height);
+
+        for (let i = 0; i < starsArray.length; i++) {
+          for (let j = i + 1; j < starsArray.length; j++) {
+            const dx = starsArray[i].x - starsArray[j].x;
+            const dy = starsArray[i].y - starsArray[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 110) {
+              starCtx.strokeStyle = `rgba(148, 163, 184, ${0.2 * (1 - dist / 110)})`;
+              starCtx.lineWidth = 1;
+              starCtx.beginPath();
+              starCtx.moveTo(starsArray[i].x, starsArray[i].y);
+              starCtx.lineTo(starsArray[j].x, starsArray[j].y);
+              starCtx.stroke();
+            }
+          }
+        }
+
+        starsArray.forEach(star => {
+          starCtx.fillStyle = `hsla(${star.colorHue}, 80%, 75%, ${star.alpha})`;
+          starCtx.shadowBlur = 12;
+          starCtx.shadowColor = `hsla(${star.colorHue}, 80%, 75%, 0.8)`;
+          starCtx.beginPath();
+          starCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+          starCtx.fill();
+
+          if (star.ringSize < star.maxRing) {
+            star.ringSize += 0.8;
+            star.ringAlpha = Math.max(0, 1 - (star.ringSize / star.maxRing));
+            starCtx.strokeStyle = `hsla(${star.colorHue}, 80%, 70%, ${star.ringAlpha * 0.4})`;
+            starCtx.lineWidth = 1.2;
+            starCtx.beginPath();
+            starCtx.arc(star.x, star.y, star.ringSize, 0, Math.PI * 2);
+            starCtx.stroke();
+          }
+        });
+      }
+      requestAnimationFrame(animateStarCanvas);
+    }
+
+    starCanvas.addEventListener('pointerdown', (e) => {
+      const rect = starCanvas.getBoundingClientRect();
+      addStar(e.clientX - rect.left, e.clientY - rect.top);
+    });
+
+    let isBreathingActive = false;
+    let breathTimer = null;
+    let breathCycleStage = 'inhale';
+    let secondsLeftInStage = 4;
+
+    function toggleBreathingGuide() {
+      isBreathingActive = !isBreathingActive;
+      const btnIcon = document.getElementById('breathBtnIcon');
+      const btnLabel = document.getElementById('breathBtnLabel');
+
+      if (isBreathingActive) {
+        btnIcon.setAttribute('data-lucide', 'pause');
+        btnLabel.textContent = 'Tạm dừng thở';
+        startBreathCycle();
+      } else {
+        btnIcon.setAttribute('data-lucide', 'play');
+        btnLabel.textContent = 'Tiếp tục chu kỳ thở';
+        clearInterval(breathTimer);
+      }
+      lucide.createIcons();
+    }
+
+    function startBreathCycle() {
+      clearInterval(breathTimer);
+      breathCycleStage = 'inhale';
+      secondsLeftInStage = 4;
+      updateBreathingVisuals();
+
+      breathTimer = setInterval(() => {
+        secondsLeftInStage--;
+        if (secondsLeftInStage <= 0) {
+          if (breathCycleStage === 'inhale') {
+            breathCycleStage = 'hold';
+            secondsLeftInStage = 7;
+          } else if (breathCycleStage === 'hold') {
+            breathCycleStage = 'exhale';
+            secondsLeftInStage = 8;
+          } else {
+            breathCycleStage = 'inhale';
+            secondsLeftInStage = 4;
+          }
+        }
+        updateBreathingVisuals();
+      }, 1000);
+    }
+
+    function updateBreathingVisuals() {
+      const orb = document.getElementById('breathingOrb');
+      const phaseText = document.getElementById('breathPhaseText');
+      const timerNum = document.getElementById('breathTimerNum');
+
+      timerNum.textContent = `${secondsLeftInStage}s`;
+
+      if (breathCycleStage === 'inhale') {
+        phaseText.textContent = 'Hít Vào';
+        orb.style.transition = 'all 4s cubic-bezier(0.25, 1, 0.5, 1)';
+        orb.style.transform = 'scale(1.85)';
+        orb.className = 'w-24 h-24 rounded-full bg-gradient-to-tr from-amber-500/50 via-orange-400/60 to-indigo-400/50 border border-white/60 shadow-[0_0_60px_rgba(251,191,36,0.5)] flex flex-col items-center justify-center transform-gpu';
+      } else if (breathCycleStage === 'hold') {
+        phaseText.textContent = 'Giữ Hơi Thở';
+        orb.style.transition = 'all 0.5s ease';
+        orb.style.transform = 'scale(1.85)';
+        orb.className = 'w-24 h-24 rounded-full bg-gradient-to-tr from-rose-500/40 via-purple-400/50 to-amber-400/50 border border-rose-300/60 shadow-[0_0_60px_rgba(244,114,182,0.4)] flex flex-col items-center justify-center transform-gpu';
+      } else {
+        phaseText.textContent = 'Thở Ra Từ Từ';
+        orb.style.transition = 'all 8s cubic-bezier(0.4, 0, 0.6, 1)';
+        orb.style.transform = 'scale(1.0)';
+        orb.className = 'w-24 h-24 rounded-full bg-gradient-to-tr from-slate-700/50 via-indigo-600/40 to-amber-500/30 border border-white/20 shadow-[0_0_30px_rgba(99,102,241,0.2)] flex flex-col items-center justify-center transform-gpu';
+      }
+    }
+
+    function initBackgroundDust() {
+      const canvas = document.getElementById('bgDustCanvas');
+      const ctx = canvas.getContext('2d');
+      let width = (canvas.width = window.innerWidth);
+      let height = (canvas.height = window.innerHeight);
+
+      window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      });
+
+      const motes = Array.from({ length: 55 }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 1.5 + 0.4,
+        alpha: Math.random() * 0.4 + 0.1,
+        speedX: (Math.random() - 0.5) * 0.25,
+        speedY: -Math.random() * 0.3 - 0.05
+      }));
+
+      function drawMotes() {
+        ctx.clearRect(0, 0, width, height);
+        motes.forEach(m => {
+          m.x += m.speedX;
+          m.y += m.speedY;
+          if (m.y < -10) m.y = height + 10;
+          if (m.x < -10) m.x = width + 10;
+          if (m.x > width + 10) m.x = -10;
+
+          ctx.fillStyle = `rgba(226, 232, 240, ${m.alpha})`;
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        requestAnimationFrame(drawMotes);
+      }
+      drawMotes();
+    }
+
+    /* ==========================================================================
+       STREAMING_CHUNK:Initializing application lifecycle...
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      renderSoundCards();
+      initBackgroundDust();
+      animateStarCanvas();
+
+      resizeRiverCanvas();
+      seedInitialLanterns();
+      animateRiverScene();
+
+      setTimeout(resizePaperBurnCanvas, 150);
+
+      document.getElementById('toggleMasterAudioBtn').addEventListener('click', () => toggleMasterAudio());
+      document.getElementById('masterVolumeSlider').addEventListener('input', (e) => {
+        initAudioContext();
+        if (masterGain) {
+          masterGain.gain.setValueAtTime(parseFloat(e.target.value), audioCtx.currentTime);
+        }
+      });
+
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
