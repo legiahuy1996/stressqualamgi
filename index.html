@@ -15,6 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -121,15 +122,7 @@
       white-space: pre-line;
       line-height: 1.65;
     }
-    /* Chống giật trang khi có tin nhắn mới */
-    #chatMessagesList {
-      overflow-anchor: none !important;
-      scroll-behavior: auto;
-    }
   </style>
-
-  <!-- Nạp trực tiếp file chat.js từ client -->
-  <script src="./api/chat.js"></script>
 </head>
 <body class="min-h-screen relative flex flex-col font-sans selection:bg-amber-500/20 selection:text-amber-200">
 
@@ -233,7 +226,9 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="soundCardContainer"></div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="soundCardContainer">
+        <!-- Sound cards dynamically injected -->
+      </div>
     </section>
 
     <section id="section-burner" class="hidden w-full flex-col items-center">
@@ -354,6 +349,7 @@
         </button>
       </div>
 
+      <!-- Subgame 1: Slow Parchment Burn -->
       <div id="game-paperBurn" class="w-full max-w-xl mx-auto flex flex-col items-center gap-5">
         <div class="w-full flex items-center justify-between text-xs text-slate-400 px-2">
           <span>Viết điều bạn muốn tan biến và xem nó cháy dần thành tro bụi</span>
@@ -385,6 +381,7 @@
         </div>
       </div>
 
+      <!-- Subgame 2: Constellation Canvas -->
       <div id="game-constellation" class="hidden w-full flex-col items-center gap-3">
         <div class="w-full flex items-center justify-between text-xs text-slate-400 px-4 max-w-2xl">
           <span>Click hoặc kéo chuột trên bầu trời để thắp sáng các vì sao và ngân vang nốt nhạc</span>
@@ -398,6 +395,7 @@
         </div>
       </div>
 
+      <!-- Subgame 3: 4-7-8 Breathing Circle -->
       <div id="game-breathing" class="hidden w-full flex-col items-center justify-center py-8">
         <div class="w-full max-w-md glass-panel p-8 rounded-3xl flex flex-col items-center text-center gap-6">
           <div class="space-y-1">
@@ -427,6 +425,7 @@
   </main>
 
   <div id="chatWidgetContainer" class="fixed bottom-5 right-5 z-40 flex flex-col items-end">
+    <!-- Chat Trigger Bubble Button -->
     <button id="openChatBtn" onclick="toggleChatDrawer()" class="group relative flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-amber-400/30 shadow-[0_10px_35px_rgba(0,0,0,0.6)] backdrop-blur-xl transition-all transform hover:scale-105 active:scale-95">
       <div class="relative flex items-center justify-center w-7 h-7 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30">
         <i data-lucide="message-circle-heart" class="w-4 h-4"></i>
@@ -443,7 +442,9 @@
       </div>
     </button>
 
+    <!-- Expandable Chat Window -->
     <div id="chatDrawer" class="hidden flex-col w-[92vw] sm:w-[410px] h-[550px] max-h-[82vh] rounded-3xl glass-panel border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden backdrop-blur-2xl animate-fade-in mt-3 relative">
+      <!-- Chat Header -->
       <div class="px-4 py-3 bg-slate-900/80 border-b border-white/10 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500/30 to-teal-500/30 flex items-center justify-center text-amber-300 border border-white/10">
@@ -454,7 +455,8 @@
               <h4 class="text-xs font-semibold text-slate-100">
                 Quán Trọ Đêm Mưa
               </h4>
-              <span id="aiEngineStatusBadge" title="Trạng thái script chat.js" onclick="checkAiBackendStatus()" class="cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-amber-500/15 border-amber-400/30 text-amber-300 hover:brightness-110 active:scale-95">
+              <!-- DYNAMIC AI ENGINE STATUS BADGE (NO ALERT POPUPS) -->
+              <span id="aiEngineStatusBadge" title="Kiểm tra trạng thái kết nối AI" onclick="checkAiBackendStatus()" class="cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-amber-500/15 border-amber-400/30 text-amber-300 hover:brightness-110 active:scale-95">
                 <span id="aiEngineStatusDot" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                 <span id="aiEngineStatusLabel">🟡 Free Engine</span>
               </span>
@@ -472,6 +474,7 @@
         </div>
       </div>
 
+      <!-- Quick Tag Bots Bar -->
       <div class="px-3 py-1.5 bg-slate-950/60 border-b border-white/5 flex items-center gap-1.5 text-[11px] overflow-x-auto no-scrollbar">
         <span class="text-[10px] text-slate-500 shrink-0">Nhắc tên bot:</span>
         <button onclick="tagBot('@Chú Bọ Cute ')" class="shrink-0 px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition flex items-center gap-1">
@@ -480,14 +483,19 @@
         <span class="text-[10px] text-slate-500 italic ml-auto">(Bọ chỉ làm thơ khi bạn tag tên)</span>
       </div>
 
-      <div id="chatMessagesList" class="flex-1 p-3.5 overflow-y-auto space-y-3 font-sans text-xs relative"></div>
+      <!-- Messages Stream -->
+      <div id="chatMessagesList" class="flex-1 p-3.5 overflow-y-auto space-y-3 font-sans text-xs relative">
+        <!-- Messages rendered dynamically -->
+      </div>
 
+      <!-- FLOATING SCROLL-TO-BOTTOM BUTTON WITH ARROW & UNREAD BADGE -->
       <button id="scrollToLatestBtn" onclick="scrollToBottomChat(true)" class="hidden absolute bottom-[108px] left-1/2 -translate-x-1/2 z-30 px-3.5 py-1.5 rounded-full bg-slate-900/95 border border-amber-400/40 text-amber-200 text-[11px] font-medium shadow-[0_6px_20px_rgba(0,0,0,0.65)] hover:bg-slate-800 transition-all items-center gap-1.5 active:scale-95 animate-bounce-soft backdrop-blur-md">
         <span>Tin nhắn mới</span>
         <i data-lucide="arrow-down" class="w-3.5 h-3.5 text-amber-300"></i>
         <span id="unreadScrollBadge" class="hidden ml-0.5 px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-bold text-[9px]">1</span>
       </button>
 
+      <!-- Typing Indicator -->
       <div id="chatTypingIndicator" class="hidden px-4 py-1.5 text-[11px] text-slate-400 bg-slate-900/60 flex items-center gap-2 border-t border-white/5">
         <span class="flex items-center gap-1">
           <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-typing-dot"></span>
@@ -497,6 +505,7 @@
         <span id="typingBotName">Chú Bọ Cute đang gieo vần thơ...</span>
       </div>
 
+      <!-- Quick Reaction Bar -->
       <div class="px-3 py-1 bg-slate-950/40 border-t border-white/5 flex items-center justify-between text-xs">
         <div class="flex items-center gap-1.5">
           <button onclick="sendQuickReaction('🫂')" class="hover:scale-125 transition" title="Gửi cái ôm ấm áp">🫂</button>
@@ -511,6 +520,7 @@
         </span>
       </div>
 
+      <!-- Input Form -->
       <form id="chatForm" onsubmit="handleSendChatMessage(event)" class="p-2.5 bg-slate-900/90 border-t border-white/10 flex items-center gap-2">
         <input type="text" id="chatMessageInput" placeholder="Kể cho Chú Bọ hoặc nhắn gì đó..." maxlength="280" class="flex-1 bg-slate-950/70 border border-white/10 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-amber-400/40 focus:ring-1 focus:ring-amber-400/30 placeholder-slate-500">
         <button type="submit" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-600 to-teal-600 hover:from-amber-500 hover:to-teal-500 text-white flex items-center justify-center transition active:scale-95 shadow-md shrink-0">
@@ -520,8 +530,11 @@
     </div>
   </div>
 
+  <!-- Footer -->
   <footer class="relative z-10 w-full max-w-6xl mx-auto px-4 py-4 text-center text-xs text-slate-300/80 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2">
-    <div>Chốn Bình Yên &copy; Được tạo ra để vỗ về tâm hồn bạn trong những ngày mưa</div>
+    <div>
+      Chốn Bình Yên &copy; Được tạo ra để vỗ về tâm hồn bạn trong những ngày mưa
+    </div>
     <div class="flex items-center gap-4">
       <span class="text-amber-300/90">Hít một hơi thật sâu và thả lỏng vai nhé</span>
     </div>
@@ -579,29 +592,41 @@
       const bufferSource = audioCtx.createBufferSource();
       bufferSource.buffer = createPinkNoiseBuffer();
       bufferSource.loop = true;
+
       const lowpass = audioCtx.createBiquadFilter();
       lowpass.type = 'lowpass';
       lowpass.frequency.setValueAtTime(1100, audioCtx.currentTime);
+
       const highpass = audioCtx.createBiquadFilter();
       highpass.type = 'highpass';
       highpass.frequency.setValueAtTime(350, audioCtx.currentTime);
+
       const gain = audioCtx.createGain();
       gain.gain.value = 1.0;
+
       bufferSource.connect(lowpass);
       lowpass.connect(highpass);
       highpass.connect(gain);
       bufferSource.start(0);
-      return { input: gain, stop: () => { try { bufferSource.stop(); } catch(e){} } };
+
+      return {
+        input: gain,
+        stop: () => {
+          try { bufferSource.stop(); } catch(e){}
+        }
+      };
     }
 
     function createRiverNode() {
       const bufferSource = audioCtx.createBufferSource();
       bufferSource.buffer = createPinkNoiseBuffer();
       bufferSource.loop = true;
+
       const bandpass = audioCtx.createBiquadFilter();
       bandpass.type = 'bandpass';
       bandpass.frequency.setValueAtTime(550, audioCtx.currentTime);
       bandpass.Q.setValueAtTime(1.2, audioCtx.currentTime);
+
       const lfo = audioCtx.createOscillator();
       lfo.frequency.setValueAtTime(0.2, audioCtx.currentTime);
       const lfoGain = audioCtx.createGain();
@@ -609,27 +634,39 @@
       lfo.connect(lfoGain);
       lfoGain.connect(bandpass.frequency);
       lfo.start();
+
       const gain = audioCtx.createGain();
       gain.gain.value = 1.2;
+
       bufferSource.connect(bandpass);
       bandpass.connect(gain);
       bufferSource.start(0);
-      return { input: gain, stop: () => { try { bufferSource.stop(); lfo.stop(); } catch(e){} } };
+
+      return {
+        input: gain,
+        stop: () => {
+          try { bufferSource.stop(); lfo.stop(); } catch(e){}
+        }
+      };
     }
 
     function createFireNode() {
       const bufferSource = audioCtx.createBufferSource();
       bufferSource.buffer = createPinkNoiseBuffer();
       bufferSource.loop = true;
+
       const filter = audioCtx.createBiquadFilter();
       filter.type = 'bandpass';
       filter.frequency.value = 450;
       filter.Q.value = 1.8;
+
       const gain = audioCtx.createGain();
       gain.gain.value = 0.8;
+
       bufferSource.connect(filter);
       filter.connect(gain);
       bufferSource.start(0);
+
       let crackleTimer = null;
       function playPop() {
         if (!isMasterPlaying) return;
@@ -647,39 +684,58 @@
         crackleTimer = setTimeout(playPop, 80 + Math.random() * 320);
       }
       playPop();
-      return { input: gain, stop: () => { try { bufferSource.stop(); clearTimeout(crackleTimer); } catch(e){} } };
+
+      return {
+        input: gain,
+        stop: () => {
+          try { bufferSource.stop(); clearTimeout(crackleTimer); } catch(e){}
+        }
+      };
     }
 
     function createOceanNode() {
       const bufferSource = audioCtx.createBufferSource();
       bufferSource.buffer = createPinkNoiseBuffer();
       bufferSource.loop = true;
+
       const filter = audioCtx.createBiquadFilter();
       filter.type = 'lowpass';
       filter.frequency.value = 350;
+
       const waveGain = audioCtx.createGain();
       waveGain.gain.value = 0.2;
+
       const lfo = audioCtx.createOscillator();
       lfo.frequency.value = 0.08;
       const lfoGain = audioCtx.createGain();
       lfoGain.gain.value = 0.45;
+
       lfo.connect(lfoGain);
       lfoGain.connect(waveGain.gain);
       lfo.start();
+
       bufferSource.connect(filter);
       filter.connect(waveGain);
       bufferSource.start(0);
-      return { input: waveGain, stop: () => { try { bufferSource.stop(); lfo.stop(); } catch(e){} } };
+
+      return {
+        input: waveGain,
+        stop: () => {
+          try { bufferSource.stop(); lfo.stop(); } catch(e){}
+        }
+      };
     }
 
     function createWindNode() {
       const bufferSource = audioCtx.createBufferSource();
       bufferSource.buffer = createPinkNoiseBuffer();
       bufferSource.loop = true;
+
       const filter = audioCtx.createBiquadFilter();
       filter.type = 'bandpass';
       filter.frequency.value = 300;
       filter.Q.value = 4.0;
+
       const lfo = audioCtx.createOscillator();
       lfo.frequency.value = 0.12;
       const lfoGain = audioCtx.createGain();
@@ -687,12 +743,20 @@
       lfo.connect(lfoGain);
       lfoGain.connect(filter.frequency);
       lfo.start();
+
       const gain = audioCtx.createGain();
       gain.gain.value = 1.0;
+
       bufferSource.connect(filter);
       filter.connect(gain);
       bufferSource.start(0);
-      return { input: gain, stop: () => { try { bufferSource.stop(); lfo.stop(); } catch(e){} } };
+
+      return {
+        input: gain,
+        stop: () => {
+          try { bufferSource.stop(); lfo.stop(); } catch(e){}
+        }
+      };
     }
 
     function createChimesNode() {
@@ -700,6 +764,7 @@
       masterNode.gain.value = 0.9;
       const pentatonic = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66];
       let chimeTimer = null;
+
       function ringSingleChime() {
         if (!isMasterPlaying) return;
         try {
@@ -708,8 +773,10 @@
           const gain = audioCtx.createGain();
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
           gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
           gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3.2);
+
           osc.connect(gain);
           gain.connect(masterNode);
           osc.start();
@@ -718,39 +785,53 @@
         chimeTimer = setTimeout(ringSingleChime, 1800 + Math.random() * 3500);
       }
       ringSingleChime();
-      return { input: masterNode, stop: () => { try { clearTimeout(chimeTimer); } catch(e){} } };
+
+      return {
+        input: masterNode,
+        stop: () => {
+          try { clearTimeout(chimeTimer); } catch(e){}
+        }
+      };
     }
 
     function createLofiNode() {
       const masterNode = audioCtx.createGain();
       masterNode.gain.value = 0.55;
+
       const chords = [
-        [220.00, 261.63, 329.63, 392.00],
-        [174.61, 220.00, 261.63, 329.63],
-        [196.00, 246.94, 293.66, 349.23],
-        [164.81, 196.00, 246.94, 293.66]
+        [220.00, 261.63, 329.63, 392.00], // Am7
+        [174.61, 220.00, 261.63, 329.63], // Fmaj7
+        [196.00, 246.94, 293.66, 349.23], // G7
+        [164.81, 196.00, 246.94, 293.66]  // Em7
       ];
       let chordIndex = 0;
       let lofiTimer = null;
+
       function playNextChord() {
         if (!isMasterPlaying) return;
         try {
           const currentNotes = chords[chordIndex % chords.length];
           chordIndex++;
+
           currentNotes.forEach(freq => {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             const filter = audioCtx.createBiquadFilter();
+
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
             filter.type = 'lowpass';
             filter.frequency.setValueAtTime(650, audioCtx.currentTime);
+
             gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.8);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 4.2);
+
             osc.connect(filter);
             filter.connect(gain);
             gain.connect(masterNode);
+
             osc.start();
             osc.stop(audioCtx.currentTime + 4.5);
           });
@@ -758,35 +839,53 @@
         lofiTimer = setTimeout(playNextChord, 4000);
       }
       playNextChord();
-      return { input: masterNode, stop: () => { try { clearTimeout(lofiTimer); } catch(e){} } };
+
+      return {
+        input: masterNode,
+        stop: () => {
+          try { clearTimeout(lofiTimer); } catch(e){}
+        }
+      };
     }
 
     function createKeyboardNode() {
       const masterNode = audioCtx.createGain();
       masterNode.gain.value = 0.35;
       let keyTimer = null;
+
       function typeTick() {
         if (!isMasterPlaying) return;
         try {
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
           const filter = audioCtx.createBiquadFilter();
+
           osc.type = 'sine';
           osc.frequency.setValueAtTime(1400 + Math.random() * 800, audioCtx.currentTime);
+
           filter.type = 'bandpass';
           filter.frequency.setValueAtTime(2200, audioCtx.currentTime);
+
           gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
           gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.035);
+
           osc.connect(filter);
           filter.connect(gain);
           gain.connect(masterNode);
+
           osc.start();
           osc.stop(audioCtx.currentTime + 0.04);
         } catch(e){}
         keyTimer = setTimeout(typeTick, 180 + Math.random() * 550);
       }
       typeTick();
-      return { input: masterNode, stop: () => { try { clearTimeout(keyTimer); } catch(e){} } };
+
+      return {
+        input: masterNode,
+        stop: () => {
+          try { clearTimeout(keyTimer); } catch(e){}
+        }
+      };
     }
 
     function playMessageArrivalChime() {
@@ -797,8 +896,10 @@
         osc.type = 'sine';
         osc.frequency.setValueAtTime(880, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(1318.51, audioCtx.currentTime + 0.18);
+
         gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.65);
+
         osc.connect(gain);
         gain.connect(masterGain);
         osc.start();
@@ -838,6 +939,7 @@
     function toggleMasterAudio() {
       initAudioContext();
       isMasterPlaying = !isMasterPlaying;
+
       const btnIcon = document.getElementById('masterPlayIcon');
       const btnText = document.getElementById('masterPlayText');
 
@@ -875,6 +977,7 @@
     function renderSoundCards() {
       const container = document.getElementById('soundCardContainer');
       container.innerHTML = '';
+
       SOUND_TRACKS.forEach(track => {
         const card = document.createElement('div');
         card.className = 'glass-panel p-4 rounded-2xl flex items-center justify-between gap-4 transition-all hover:border-amber-400/30';
@@ -909,6 +1012,7 @@
     function applyPreset(name) {
       initAudioContext();
       if (!isMasterPlaying) toggleMasterAudio();
+
       if (name === 'lofiRain') {
         setTrackVol('rain', 0.70);
         setTrackVol('lofi', 0.65);
@@ -983,7 +1087,6 @@
 
       if (tabId === 'river') {
         resizeRiverCanvas();
-        if (ambientLanterns.length === 0) initRiverLanterns();
       } else if (tabId === 'mindless') {
         setTimeout(initSlowBurnCanvas, 50);
       }
@@ -1064,6 +1167,7 @@
 
     function initRiverLanterns() {
       userLanterns = getSavedLanterns();
+
       userLanterns.forEach((l) => {
         l.x = l.x || (Math.random() * (riverWidth || 600));
         l.y = l.y || (120 + Math.random() * 260);
@@ -1115,6 +1219,7 @@
       const w = l.size || 26;
       const h = w * 1.25;
 
+      // 1. Water Candlelight Reflection
       const gradReflect = ctx.createRadialGradient(0, h * 0.7, 2, 0, h * 0.7, w * 1.8);
       gradReflect.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
       gradReflect.addColorStop(0.5, 'rgba(245, 158, 11, 0.2)');
@@ -1124,11 +1229,13 @@
       ctx.ellipse(0, h * 0.75, w * 1.4, 8, 0, 0, Math.PI * 2);
       ctx.fill();
 
+      // 2. Wooden Base
       ctx.fillStyle = '#1e140d';
       ctx.beginPath();
       ctx.roundRect(-w * 0.65, h * 0.42, w * 1.3, 5, 2);
       ctx.fill();
 
+      // 3. Glowing Rice-Paper Body
       const paperGrad = ctx.createLinearGradient(0, -h * 0.5, 0, h * 0.4);
       if (l.isPrimary) {
         paperGrad.addColorStop(0, 'rgba(254, 243, 199, 0.95)');
@@ -1144,6 +1251,7 @@
       ctx.roundRect(-w * 0.55, -h * 0.5, w * 1.1, h * 0.92, 3);
       ctx.fill();
 
+      // Wooden Lattice Spars
       ctx.strokeStyle = 'rgba(74, 38, 14, 0.65)';
       ctx.lineWidth = 1.2;
       ctx.strokeRect(-w * 0.55, -h * 0.5, w * 1.1, h * 0.92);
@@ -1152,6 +1260,7 @@
       ctx.lineTo(w * 0.55, -h * 0.05);
       ctx.stroke();
 
+      // 4. Candlelight Core
       const flicker = (Math.sin(time * 0.015 + l.bobOffset * 4) + Math.cos(time * 0.02 + l.bobOffset)) * 0.15;
       const coreGrad = ctx.createRadialGradient(0, 0, 1, 0, 0, w * 0.45);
       coreGrad.addColorStop(0, `rgba(255, 255, 240, ${0.95 + flicker})`);
@@ -1162,6 +1271,7 @@
       ctx.arc(0, 0, w * 0.5, 0, Math.PI * 2);
       ctx.fill();
 
+      // 5. Tassel sway
       const tasselSway = Math.sin(time * 0.003 + l.bobOffset) * 3;
       ctx.strokeStyle = '#dc2626';
       ctx.lineWidth = 1.5;
@@ -1170,6 +1280,7 @@
       ctx.quadraticCurveTo(tasselSway, h * 0.65, tasselSway * 1.5, h * 0.82);
       ctx.stroke();
 
+      // Top Roof Ring
       ctx.fillStyle = '#311a0d';
       ctx.fillRect(-w * 0.35, -h * 0.55, w * 0.7, 3);
 
@@ -1177,7 +1288,14 @@
     }
 
     function addRiverRipple(x, y) {
-      activeRipples.push({ x, y, radius: 4, maxRadius: 320, alpha: 0.85, speed: 2.4 });
+      activeRipples.push({
+        x, y,
+        radius: 4,
+        maxRadius: 320,
+        alpha: 0.85,
+        speed: 2.4
+      });
+
       for (let i = 0; i < 7; i++) {
         const angle = Math.random() * Math.PI * 2;
         const spd = 1.5 + Math.random() * 3.5;
@@ -1304,6 +1422,7 @@
       const text = document.getElementById('modalThoughtText');
       const date = document.getElementById('modalLanternDate');
       const delBtn = document.getElementById('modalDeleteLanternBtn');
+
       text.innerText = `"${l.thought}"`;
       date.innerText = l.createdAt ? `Đã thả lúc: ${l.createdAt}` : '';
 
@@ -1312,6 +1431,7 @@
       } else {
         delBtn.classList.add('hidden');
       }
+
       modal.classList.remove('hidden');
       modal.classList.add('flex');
     }
@@ -1649,6 +1769,7 @@
     function drawStars() {
       if (!starsCtx) return;
       starsCtx.clearRect(0, 0, starsCanvas.width, starsCanvas.height);
+
       starsCtx.fillStyle = '#060a1c';
       starsCtx.fillRect(0, 0, starsCanvas.width, starsCanvas.height);
 
@@ -1811,8 +1932,7 @@
       loopRain();
     }
 
-    let isChatJsLoaded = false;
-    let userIsBrowsingHistory = false;
+    let isGeminiConfigured = false;
     let mqttClient = null;
     const MQTT_TOPIC_CHAT = 'sanctuary_rainy_lounge_v4/chat';
     const MQTT_TOPIC_HISTORY_REQ = 'sanctuary_rainy_lounge_v4/history_req';
@@ -1821,6 +1941,7 @@
 
     let myNickname = localStorage.getItem('sanctuary_user_nick') || ('Lữ khách #' + (Math.floor(Math.random() * 900) + 100));
 
+    // SOLE POETIC BOT: Chú Bọ Cute
     const BOT_BUG = {
       id: 'bot_bug',
       name: 'Chú Bọ Cute',
@@ -1868,6 +1989,7 @@ Trút đi nặng trĩu ưu phiền,
       ]
     };
 
+    // Pre-seeded comforting historical conversation so visitors are never greeted by an empty room
     const DEFAULT_HISTORY = [
       {
         id: 'hist_0',
@@ -1905,26 +2027,40 @@ Trút đi nặng trĩu ưu phiền,
 
     let chatMessages = [...DEFAULT_HISTORY];
 
-    // Kiểm tra trạng thái nạp file chat.js
-    function checkAiBackendStatus() {
+    // Check backend API route status without alert popups
+    async function checkAiBackendStatus() {
       const badge = document.getElementById('aiEngineStatusBadge');
       const dot = document.getElementById('aiEngineStatusDot');
       const label = document.getElementById('aiEngineStatusLabel');
 
-      // Kiểm tra xem chat.js có cung cấp hàm xử lý nào trên window không
-      const hasChatJsHandler = typeof window.chatHandler === 'function' ||
-                               typeof window.generateChatReply === 'function' ||
-                               typeof window.queryPoeticAI === 'function' ||
-                               window.CHAT_JS_LOADED === true;
+      const endpoints = ['/api/chat', '/app/api/chat'];
+      let foundActiveKey = false;
 
-      if (hasChatJsHandler) {
-        isChatJsLoaded = true;
+      for (const ep of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const res = await fetch(ep, { method: 'GET', signal: controller.signal });
+          clearTimeout(timeoutId);
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data && (data.configured || data.hasKey)) {
+              foundActiveKey = true;
+              break;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (foundActiveKey) {
+        isGeminiConfigured = true;
         badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-emerald-500/20 border-emerald-400/40 text-emerald-300 hover:brightness-110 active:scale-95 shadow-sm shadow-emerald-950/40';
         dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
-        label.innerText = '🟢 Chat.js Loaded';
-        badge.title = 'Đã nạp file chat.js thành công!';
+        label.innerText = '🟢 Gemini Active';
+        badge.title = 'Gemini API đã sẵn sàng từ biến môi trường GEMINI_API_KEY';
       } else {
-        isChatJsLoaded = false;
+        isGeminiConfigured = false;
         badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-amber-500/15 border-amber-400/30 text-amber-300 hover:brightness-110 active:scale-95';
         dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
         label.innerText = '🟡 Free Engine';
@@ -1932,37 +2068,34 @@ Trút đi nặng trĩu ưu phiền,
       }
     }
 
-    // Tận dụng chat.js trực tiếp thay vì gọi API endpoint
     async function queryPoeticAI(userMessage) {
       const promptText = `${BOT_BUG.systemPrompt}\n\nNgười dùng nhắn: "${userMessage}".\nHãy làm ngay một bài thơ vỗ về họ (4-6 dòng thơ có xuống dòng, chỉ trả về bài thơ, không văn xuôi):`;
 
-      // 1. Nếu chat.js xuất hàm xử lý trên window, gọi trực tiếp
-      try {
-        if (typeof window.queryPoeticAI === 'function') {
-          const res = await window.queryPoeticAI(userMessage, promptText);
-          if (res) return cleanAiPoem(res);
-        } else if (typeof window.generateChatReply === 'function') {
-          const res = await window.generateChatReply({ message: userMessage, prompt: promptText });
-          if (res) return cleanAiPoem(res);
-        } else if (typeof window.chatHandler === 'function') {
-          const mockReq = { body: { message: userMessage, prompt: promptText } };
-          let resData = null;
-          const mockRes = {
-            status: () => mockRes,
-            json: (data) => { resData = data; return mockRes; },
-            setHeader: () => mockRes,
-            end: () => mockRes
-          };
-          await window.chatHandler(mockReq, mockRes);
-          if (resData && (resData.reply || resData.message)) {
-            return cleanAiPoem(resData.reply || resData.message);
+      // 1. Backend routes
+      const endpoints = ['/api/chat', '/app/api/chat'];
+      for (const ep of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6500);
+          const proxyRes = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ botKey: 'bug', message: userMessage, prompt: promptText }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (proxyRes.ok) {
+            const data = await proxyRes.json();
+            if (data && data.reply) {
+              if (!isGeminiConfigured) checkAiBackendStatus();
+              return cleanAiPoem(data.reply);
+            }
           }
-        }
-      } catch (e) {
-        console.warn('Lỗi khi gọi qua chat.js:', e);
+        } catch (e) {}
       }
 
-      // 2. Free Gateway Fallback
+      // 2. Free Gateway
       try {
         const encodedPrompt = encodeURIComponent(promptText);
         const controller = new AbortController();
@@ -1995,6 +2128,7 @@ Trút đi nặng trĩu ưu phiền,
 
     const LOCAL_BROADCAST = new BroadcastChannel('sanctuary_local_tab_channel');
     let unreadMessagesCount = 0;
+    let renderingChatMessages = false;
 
     function initGlobalChatSync() {
       try {
@@ -2002,6 +2136,7 @@ Trút đi nặng trĩu ưu phiền,
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
+            // Merge cached history without duplicates
             parsed.forEach(p => {
               if (!chatMessages.some(m => m.id === p.id)) {
                 chatMessages.push(p);
@@ -2010,7 +2145,7 @@ Trút đi nặng trĩu ưu phiền,
           }
         }
       } catch (e) {}
-      renderAllChatMessages();
+      renderChatMessages(false);
 
       LOCAL_BROADCAST.onmessage = (e) => {
         if (e.data && e.data.type === 'NEW_MESSAGE') {
@@ -2039,6 +2174,7 @@ Trút đi nặng trĩu ưu phiền,
             mqttClient.subscribe(MQTT_TOPIC_HISTORY_REQ, { qos: 0 });
             mqttClient.subscribe(MQTT_TOPIC_HISTORY_RESP, { qos: 0 });
 
+            // Broadcast request for history from active clients
             setTimeout(() => {
               try {
                 mqttClient.publish(MQTT_TOPIC_HISTORY_REQ, JSON.stringify({ reqId: clientId }));
@@ -2052,6 +2188,7 @@ Trút đi nặng trĩu ưu phiền,
               if (topic === MQTT_TOPIC_CHAT) {
                 handleIncomingMessage(data);
               } else if (topic === MQTT_TOPIC_HISTORY_REQ) {
+                // If another user joins and requests history, share recent history
                 if (data.reqId !== clientId && chatMessages.length > 0) {
                   mqttClient.publish(MQTT_TOPIC_HISTORY_RESP, JSON.stringify({
                     targetId: data.reqId,
@@ -2091,8 +2228,16 @@ Trút đi nặng trĩu ưu phiền,
         chatMessages.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
         if (chatMessages.length > 70) chatMessages = chatMessages.slice(-70);
         saveChatMessages();
-        renderAllChatMessages();
+        renderChatMessages();
+        unreadMessagesCount++;
+        showScrollToBottomBtn(unreadMessagesCount);
       }
+    }
+
+    function isUserNearBottom() {
+      const container = document.getElementById('chatMessagesList');
+      if (!container) return true;
+      return (container.scrollHeight - container.scrollTop - container.clientHeight) < 85;
     }
 
     function handleIncomingMessage(msg) {
@@ -2103,7 +2248,10 @@ Trút đi nặng trĩu ưu phiền,
       if (chatMessages.length > 70) chatMessages.shift();
 
       saveChatMessages();
-      appendSingleChatMessage(msg, false);
+
+      renderChatMessages();
+      unreadMessagesCount++;
+      showScrollToBottomBtn(unreadMessagesCount);
 
       playMessageArrivalChime();
       showUnreadBadge();
@@ -2114,7 +2262,8 @@ Trút đi nặng trĩu ưu phiền,
         chatMessages.push(msg);
         if (chatMessages.length > 70) chatMessages.shift();
         saveChatMessages();
-        appendSingleChatMessage(msg, msg.sender === myNickname);
+        renderChatMessages(true);
+        hideScrollToBottomBtn();
       }
 
       try {
@@ -2150,13 +2299,12 @@ Trút đi nặng trĩu ưu phiền,
       const container = document.getElementById('chatMessagesList');
       if (container) {
         container.addEventListener('scroll', () => {
-          const distFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
-          if (distFromBottom > 35) {
-            userIsBrowsingHistory = true;
-          } else {
-            userIsBrowsingHistory = false;
+          if (renderingChatMessages) return;
+          if (container.scrollHeight - container.scrollTop - container.clientHeight <= 2) {
             hideScrollToBottomBtn();
             unreadMessagesCount = 0;
+          } else if (unreadMessagesCount > 0) {
+            showScrollToBottomBtn(unreadMessagesCount);
           }
         });
       }
@@ -2195,7 +2343,6 @@ Trút đi nặng trĩu ưu phiền,
       }
       hideScrollToBottomBtn();
       unreadMessagesCount = 0;
-      userIsBrowsingHistory = false;
     }
 
     function toggleChatDrawer() {
@@ -2220,74 +2367,60 @@ Trút đi nặng trĩu ưu phiền,
       }
     }
 
-    function createChatMessageElement(msg) {
-      const isMe = msg.sender === myNickname;
-      const div = document.createElement('div');
-      div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} gap-1`;
-
-      let senderHeader = '';
-      if (msg.isBot) {
-        senderHeader = `
-          <div class="flex items-center gap-1.5 mb-0.5">
-            <span class="text-[11px] font-semibold text-rose-300">${msg.sender}</span>
-            <span class="text-[9px] px-1.5 py-0.2 rounded-full ${BOT_BUG.avatarBg}">${msg.badge}</span>
-            <span class="text-[9px] text-slate-500">${msg.time}</span>
-          </div>
-        `;
-      } else {
-        senderHeader = `
-          <div class="flex items-center gap-1.5 mb-0.5">
-            <span class="text-[11px] font-medium ${isMe ? 'text-amber-300' : 'text-slate-300'}">${msg.sender}</span>
-            <span class="text-[9px] text-slate-500">${msg.time}</span>
-          </div>
-        `;
-      }
-
-      let bubbleClass = '';
-      if (isMe) {
-        bubbleClass = 'bg-gradient-to-r from-amber-600/50 to-orange-600/50 border border-amber-400/30 text-amber-50 rounded-2xl rounded-tr-sm';
-      } else if (msg.isBot) {
-        bubbleClass = 'bg-slate-900/90 border border-rose-400/25 text-rose-100/95 rounded-2xl rounded-tl-sm shadow-sm poem-line font-serif italic text-[12.5px]';
-      } else {
-        bubbleClass = 'bg-slate-900/80 border border-white/10 text-slate-200 rounded-2xl rounded-tl-sm';
-      }
-
-      div.innerHTML = `
-        ${senderHeader}
-        <div class="max-w-[88%] px-3.5 py-2 leading-relaxed ${bubbleClass}">
-          ${escapeHTML(msg.text)}
-        </div>
-      `;
-      return div;
-    }
-
-    function appendSingleChatMessage(msg, isMe = false) {
+    function renderChatMessages(autoScroll = false) {
       const container = document.getElementById('chatMessagesList');
       if (!container) return;
-
       const previousScrollTop = container.scrollTop;
-      const el = createChatMessageElement(msg);
-      container.appendChild(el);
-
-      if (isMe) {
-        scrollToBottomChat(true);
-      } else if (userIsBrowsingHistory) {
-        container.scrollTop = previousScrollTop;
-        unreadMessagesCount++;
-        showScrollToBottomBtn(unreadMessagesCount);
-      } else {
-        container.scrollTop = container.scrollHeight;
-      }
-    }
-
-    function renderAllChatMessages() {
-      const container = document.getElementById('chatMessagesList');
-      if (!container) return;
+      renderingChatMessages = true;
       container.innerHTML = '';
+
       chatMessages.forEach(msg => {
-        container.appendChild(createChatMessageElement(msg));
+        const isMe = msg.sender === myNickname;
+        const div = document.createElement('div');
+        div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} gap-1`;
+
+        let senderHeader = '';
+        if (msg.isBot) {
+          senderHeader = `
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-[11px] font-semibold text-rose-300">${msg.sender}</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded-full ${BOT_BUG.avatarBg}">${msg.badge}</span>
+              <span class="text-[9px] text-slate-500">${msg.time}</span>
+            </div>
+          `;
+        } else {
+          senderHeader = `
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-[11px] font-medium ${isMe ? 'text-amber-300' : 'text-slate-300'}">${msg.sender}</span>
+              <span class="text-[9px] text-slate-500">${msg.time}</span>
+            </div>
+          `;
+        }
+
+        let bubbleClass = '';
+        if (isMe) {
+          bubbleClass = 'bg-gradient-to-r from-amber-600/50 to-orange-600/50 border border-amber-400/30 text-amber-50 rounded-2xl rounded-tr-sm';
+        } else if (msg.isBot) {
+          bubbleClass = 'bg-slate-900/90 border border-rose-400/25 text-rose-100/95 rounded-2xl rounded-tl-sm shadow-sm poem-line font-serif italic text-[12.5px]';
+        } else {
+          bubbleClass = 'bg-slate-900/80 border border-white/10 text-slate-200 rounded-2xl rounded-tl-sm';
+        }
+
+        div.innerHTML = `
+          ${senderHeader}
+          <div class="max-w-[88%] px-3.5 py-2 leading-relaxed ${bubbleClass}">
+            ${escapeHTML(msg.text)}
+          </div>
+        `;
+        container.appendChild(div);
       });
-      container.scrollTop = container.scrollHeight;
+
+      if (autoScroll) {
+        scrollToBottomChat(false);
+      } else {
+        container.scrollTop = previousScrollTop;
+      }
+      requestAnimationFrame(() => { renderingChatMessages = false; });
     }
 
     function escapeHTML(str) {
@@ -2332,6 +2465,7 @@ Trút đi nặng trĩu ưu phiền,
       broadcastChatMessage(userMsg);
       input.value = '';
 
+      // Chú Bọ Cute is completely silent unless explicitly mentioned
       if (isBotMentioned(text)) {
         processBotAiResponse(text);
       }
@@ -2344,7 +2478,9 @@ Trút đi nặng trĩu ưu phiền,
 
     async function processBotAiResponse(userText) {
       showTypingIndicator(BOT_BUG.name);
+
       const poeticReply = await queryPoeticAI(userText);
+
       hideTypingIndicator();
 
       const botReplyMsg = {
