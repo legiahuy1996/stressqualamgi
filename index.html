@@ -2039,7 +2039,7 @@ Trút đi nặng trĩu ưu phiền,
       for (const ep of endpoints) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 2500);
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
           const res = await fetch(ep, { method: 'GET', signal: controller.signal });
           clearTimeout(timeoutId);
 

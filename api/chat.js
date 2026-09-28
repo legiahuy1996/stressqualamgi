@@ -1,3 +1,4 @@
+if (typeof window !== 'undefined') {
 /* ==========================================================
    APP.JS - CHỐN BÌNH YÊN (Mental Decompression Web App)
    ========================================================== */
@@ -983,3 +984,48 @@ window.addEventListener('DOMContentLoaded', () => {
     resizeStarCanvas();
   });
 });
+} else {
+  module.exports = async function handler(req, res) {
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+
+    if (req.method === 'GET') {
+      return res.status(200).json({ configured: Boolean(apiKey) });
+    }
+    if (req.method !== 'POST') {
+      res.setHeader('Allow', 'GET, POST');
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+    if (!apiKey) {
+      return res.status(503).json({ error: 'Gemini is not configured' });
+    }
+
+    const message = req.body?.message;
+    if (typeof message !== 'string' || !message.trim() || message.length > 280) {
+      return res.status(400).json({ error: 'Invalid message' });
+    }
+
+    try {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: 'Bạn là Chú Bọ Cute. Chỉ trả lời bằng một bài thơ tiếng Việt dịu dàng, 4-6 dòng, để vỗ về người dùng. Không viết văn xuôi.' }] },
+          contents: [{ parts: [{ text: message.trim() }] }]
+        }),
+        signal: AbortSignal.timeout(8000)
+      });
+      if (!response.ok) {
+        return res.status(502).json({ error: 'Gemini request failed' });
+      }
+
+      const data = await response.json();
+      const reply = data.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('').trim();
+      if (!reply) {
+        return res.status(502).json({ error: 'Gemini returned no reply' });
+      }
+      return res.status(200).json({ reply });
+    } catch (error) {
+      return res.status(502).json({ error: 'Gemini request failed' });
+    }
+  };
+}
