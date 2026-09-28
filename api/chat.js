@@ -1,7 +1,6 @@
-// api/chat.js - Vercel Serverless Function
+// api/chat.js - Vercel Serverless Function (Fixed Dual-Auth Bug)
 export default async function handler(req, res) {
-  // Bật CORS cho mọi origin
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
   res.setHeader(
@@ -13,11 +12,11 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
 
-  // Endpoint kiểm tra nhanh trạng thái key (cho badge màu xanh/vàng)
+  // Endpoint ping kiểm tra key
   if (req.method === 'GET') {
-    if (apiKey && apiKey.trim().length > 5) {
+    if (apiKey.length > 5) {
       return res.status(200).json({ status: 'active', hasKey: true });
     }
     return res.status(200).json({ status: 'fallback', hasKey: false });
@@ -32,20 +31,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message, persona } = req.body || {};
-    const userPrompt = message || "Chào chú bọ, hôm nay tớ mệt quá";
+    const { message } = req.body || {};
+    const userPrompt = message || "Chào chú bọ, tớ mệt quá";
 
-    // System instruction ép Chú Bọ Cute làm thơ 4-5 chữ / lục bát vỗ về
     const systemPrompt = `Bạn là "Chú Bọ Cute (🐞)", một bé bọ nhỏ nhắn với trái tim ấm áp, là người lắng nghe lữ khách dừng chân lúc đêm muộn.
 Quy tắc trả lời:
 - Luôn gọi đối phương là "bạn", "bạn ơi", xưng "tớ" hoặc "bọ nhỏ".
-- Trả lời bằng một bài thơ ngắn dịu dàng (4-6 dòng, thể thơ 4 chữ, 5 chữ hoặc lục bát ngọt ngào).
+- Trả lời bằng một bài thơ ngắn dịu dàng (4-6 dòng, thể thơ 4 chữ, 5 chữ hoặc lục bát).
 - Chủ đề: Chiếc lá non, ôm thật chặt, vỗ về nỗi buồn, buông bỏ áp lực và chúc ngủ ngon.
-- Giọng văn dễ thương, trong sáng, chữa lành tâm hồn, không dùng từ ngữ đao to búa lớn.`;
-
-    // Gọi trực tiếp Google Gemini API qua endpoint chính thức
-    // Dùng gemini-2.5-flash (tự động fallback sang gemini-1.5-flash nếu cần)
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey.trim()}`;
+- Giọng văn dễ thương, trong sáng, chữa lành tâm hồn.`;
 
     const payload = {
       contents: [
@@ -57,36 +51,53 @@ Quy tắc trả lời:
         }
       ],
       generationConfig: {
-        temperature: 0.85,
-        maxOutputTokens: 250
+        temperature: 0.8,
+        maxOutputTokens: 220
       }
     };
 
-    const response = await fetch(endpoint, {
+    // ĐÃ SỬA: Chỉ dùng duy nhất header 'x-goog-api-key' (KHÔNG truyền ?key= vào URL)
+    // để tránh lỗi "Multiple authentication credentials received" với key dạng AQ.
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+
+    let response = await fetch(url, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey.trim()
+        'x-goog-api-key': apiKey
       },
       body: JSON.stringify(payload)
     });
 
+    // Fallback sang gemini-1.5-flash nếu 2.5 bận hoặc chưa khả dụng
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini API Error:', errorText);
-      return res.status(502).json({ error: 'Lỗi từ Gemini API', details: errorText });
+      const fallbackUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+      response = await fetch(fallbackUrl, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Gemini API Error:', errText);
+      return res.status(502).json({ error: 'Gemini upstream error', details: errText });
     }
 
     const data = await response.json();
     const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!replyText) {
-      return res.status(502).json({ error: 'Không nhận được phản hồi từ AI' });
+      return res.status(502).json({ error: 'Không nhận được câu trả lời từ AI' });
     }
 
     return res.status(200).json({ reply: replyText.trim() });
   } catch (err) {
-    console.error('Serverless internal error:', err);
+    console.error('Serverless catch error:', err);
     return res.status(500).json({ error: err.message || 'Internal Server Error' });
   }
 }
