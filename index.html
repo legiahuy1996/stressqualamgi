@@ -484,7 +484,7 @@
       </div>
 
       <!-- Messages Stream -->
-      <div id="chatMessagesList" class="flex-1 p-3.5 overflow-y-auto space-y-3 font-sans text-xs scroll-smooth relative">
+      <div id="chatMessagesList" class="flex-1 p-3.5 overflow-y-auto space-y-3 font-sans text-xs relative">
         <!-- Messages rendered dynamically -->
       </div>
 
@@ -2128,6 +2128,7 @@ Trút đi nặng trĩu ưu phiền,
 
     const LOCAL_BROADCAST = new BroadcastChannel('sanctuary_local_tab_channel');
     let unreadMessagesCount = 0;
+    let renderingChatMessages = false;
 
     function initGlobalChatSync() {
       try {
@@ -2298,6 +2299,7 @@ Trút đi nặng trĩu ưu phiền,
       const container = document.getElementById('chatMessagesList');
       if (container) {
         container.addEventListener('scroll', () => {
+          if (renderingChatMessages) return;
           if (container.scrollHeight - container.scrollTop - container.clientHeight <= 2) {
             hideScrollToBottomBtn();
             unreadMessagesCount = 0;
@@ -2369,6 +2371,7 @@ Trút đi nặng trĩu ưu phiền,
       const container = document.getElementById('chatMessagesList');
       if (!container) return;
       const previousScrollTop = container.scrollTop;
+      renderingChatMessages = true;
       container.innerHTML = '';
 
       chatMessages.forEach(msg => {
@@ -2417,6 +2420,7 @@ Trút đi nặng trĩu ưu phiền,
       } else {
         container.scrollTop = previousScrollTop;
       }
+      requestAnimationFrame(() => { renderingChatMessages = false; });
     }
 
     function escapeHTML(str) {
