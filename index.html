@@ -42,6 +42,7 @@
             'subtle-drift': 'subtleDrift 28s ease-in-out infinite alternate',
             'float-slow': 'floating 4s ease-in-out infinite alternate',
             'typing-dot': 'typingBounce 1.4s infinite ease-in-out',
+            'bounce-soft': 'bounceSoft 2s infinite',
           },
           keyframes: {
             subtleDrift: {
@@ -55,6 +56,10 @@
             typingBounce: {
               '0%, 80%, 100%': { transform: 'scale(0)' },
               '40%': { transform: 'scale(1)' }
+            },
+            bounceSoft: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-4px)' }
             }
           }
         }
@@ -113,6 +118,10 @@
     .vignette-overlay {
       background: radial-gradient(circle at center, transparent 40%, rgba(3, 5, 12, 0.88) 100%);
     }
+    .poem-line {
+      white-space: pre-line;
+      line-height: 1.65;
+    }
   </style>
 </head>
 <body class="min-h-screen relative flex flex-col font-sans selection:bg-amber-500/20 selection:text-amber-200">
@@ -147,7 +156,7 @@
             <span id="onlineCounterText"><strong class="font-bold text-emerald-200">69</strong> người đang cùng bạn dừng chân</span>
           </div>
         </div>
-        <p class="text-xs text-slate-300/80 tracking-wider">Thành phố lofi đêm mưa &bull; Đèn lồng trôi & Bạn đồng hành vỗ về</p>
+        <p class="text-xs text-slate-300/80 tracking-wider">Thành phố lofi đêm mưa &bull; Đèn lồng trôi & Bạn đồng hành ngâm thơ</p>
       </div>
     </div>
 
@@ -434,17 +443,16 @@
       <div class="text-left hidden sm:block">
         <div class="text-xs font-medium text-slate-200 flex items-center gap-1.5">
           Quán Trọ Đêm Mưa
-          <!-- Real-time Status Badge Indicator -->
           <span id="chatMqttStatusBadge" class="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online
           </span>
         </div>
-        <div class="text-[10px] text-slate-400">Có Chú Bọ Cute & lữ khách đang lắng nghe</div>
+        <div class="text-[10px] text-slate-400">Có Chú Bọ Cute ngâm thơ an ủi</div>
       </div>
     </button>
 
     <!-- Expandable Chat Window -->
-    <div id="chatDrawer" class="hidden flex-col w-[92vw] sm:w-[410px] h-[550px] max-h-[82vh] rounded-3xl glass-panel border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden backdrop-blur-2xl animate-fade-in mt-3">
+    <div id="chatDrawer" class="hidden flex-col w-[92vw] sm:w-[410px] h-[550px] max-h-[82vh] rounded-3xl glass-panel border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden backdrop-blur-2xl animate-fade-in mt-3 relative">
       <!-- Chat Header -->
       <div class="px-4 py-3 bg-slate-900/80 border-b border-white/10 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
@@ -456,8 +464,8 @@
               <h4 class="text-xs font-semibold text-slate-100">
                 Quán Trọ Đêm Mưa
               </h4>
-              <!-- DYNAMIC AI ENGINE STATUS BADGE -->
-              <span id="aiEngineStatusBadge" title="Kiểm tra trạng thái kết nối AI" onclick="checkAiBackendStatus(true)" class="cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-amber-500/15 border-amber-400/30 text-amber-300 hover:brightness-110 active:scale-95">
+              <!-- DYNAMIC AI ENGINE STATUS BADGE (NO ALERT POPUPS) -->
+              <span id="aiEngineStatusBadge" title="Kiểm tra trạng thái kết nối AI" onclick="checkAiBackendStatus()" class="cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-amber-500/15 border-amber-400/30 text-amber-300 hover:brightness-110 active:scale-95">
                 <span id="aiEngineStatusDot" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                 <span id="aiEngineStatusLabel">🟡 Free Engine</span>
               </span>
@@ -475,29 +483,26 @@
         </div>
       </div>
 
-      <!-- Quick Tag Bots Bar & Auto Conversation Switch -->
-      <div class="px-3 py-1.5 bg-slate-950/60 border-b border-white/5 flex items-center justify-between gap-1 text-[11px]">
-        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          <span class="text-[10px] text-slate-500 shrink-0">Trò chuyện:</span>
-          <button onclick="tagBot('@Chú Bọ Cute ')" class="shrink-0 px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition flex items-center gap-1">
-            <span>🐞</span> Chú Bọ Cute
-          </button>
-          <button onclick="tagBot('@Mèo Béo ')" class="shrink-0 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition flex items-center gap-1">
-            <span>🐱</span> Mèo Béo
-          </button>
-          <button onclick="tagBot('@Bác Gấu ')" class="shrink-0 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition flex items-center gap-1">
-            <span>🐻</span> Bác Gấu
-          </button>
-        </div>
-        <button id="toggleBotBanterBtn" onclick="toggleBotAutoChat()" title="Bật/tắt các bot tự trò chuyện với nhau" class="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition">
-          ⚡ Bot 5s: <span id="botBanterStatusText" class="text-emerald-300">BẬT</span>
+      <!-- Quick Tag Bots Bar -->
+      <div class="px-3 py-1.5 bg-slate-950/60 border-b border-white/5 flex items-center gap-1.5 text-[11px] overflow-x-auto no-scrollbar">
+        <span class="text-[10px] text-slate-500 shrink-0">Nhắc tên bot:</span>
+        <button onclick="tagBot('@Chú Bọ Cute ')" class="shrink-0 px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition flex items-center gap-1">
+          <span>🐞</span> @Chú Bọ Cute
         </button>
+        <span class="text-[10px] text-slate-500 italic ml-auto">(Bọ chỉ làm thơ khi bạn tag tên)</span>
       </div>
 
       <!-- Messages Stream -->
-      <div id="chatMessagesList" class="flex-1 p-3.5 overflow-y-auto space-y-3 font-sans text-xs scroll-smooth">
+      <div id="chatMessagesList" class="flex-1 p-3.5 overflow-y-auto space-y-3 font-sans text-xs scroll-smooth relative">
         <!-- Messages rendered dynamically -->
       </div>
+
+      <!-- FLOATING SCROLL-TO-BOTTOM BUTTON WITH ARROW & UNREAD BADGE -->
+      <button id="scrollToLatestBtn" onclick="scrollToBottomChat(true)" class="hidden absolute bottom-[108px] left-1/2 -translate-x-1/2 z-30 px-3.5 py-1.5 rounded-full bg-slate-900/95 border border-amber-400/40 text-amber-200 text-[11px] font-medium shadow-[0_6px_20px_rgba(0,0,0,0.65)] hover:bg-slate-800 transition-all items-center gap-1.5 active:scale-95 animate-bounce-soft backdrop-blur-md">
+        <span>Tin nhắn mới</span>
+        <i data-lucide="arrow-down" class="w-3.5 h-3.5 text-amber-300"></i>
+        <span id="unreadScrollBadge" class="hidden ml-0.5 px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-bold text-[9px]">1</span>
+      </button>
 
       <!-- Typing Indicator -->
       <div id="chatTypingIndicator" class="hidden px-4 py-1.5 text-[11px] text-slate-400 bg-slate-900/60 flex items-center gap-2 border-t border-white/5">
@@ -506,7 +511,7 @@
           <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-typing-dot [animation-delay:0.2s]"></span>
           <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-typing-dot [animation-delay:0.4s]"></span>
         </span>
-        <span id="typingBotName">Chú Bọ Cute đang nghĩ lời vỗ về...</span>
+        <span id="typingBotName">Chú Bọ Cute đang gieo vần thơ...</span>
       </div>
 
       <!-- Quick Reaction Bar -->
@@ -1958,7 +1963,7 @@
     }
 
     // ==========================================
-    // 8. GLOBAL REALTIME CHAT (MQTT) & AI BOTS
+    // 8. GLOBAL REALTIME CHAT (MQTT) & POETIC BOTS
     // ==========================================
     let isGeminiConfigured = false;
     let mqttClient = null;
@@ -1967,140 +1972,139 @@
 
     let myNickname = localStorage.getItem('sanctuary_user_nick') || ('Lữ khách #' + (Math.floor(Math.random() * 900) + 100));
 
-    const BOTS = {
-      bug: {
-        id: 'bot_bug',
-        name: 'Chú Bọ Cute',
-        badge: '🐞 bé ngoan AI',
-        tag: '@Chú Bọ Cute',
-        avatarBg: 'bg-rose-500/20 text-rose-300 border border-rose-500/30',
-        systemPrompt: `Bạn là "Chú Bọ Cute" - một chú bọ rùa nhỏ xíu xiu, vô cùng đáng yêu, ấm áp và siêu đồng cảm trong một trang web xả stress đêm mưa.
-- Cách xưng hô: Gọi người dùng là "bạn ơi", "bạn ngoan", tự xưng là "tớ", "chú bọ" hoặc "bọ".
-- Phong cách: Dễ thương, dịu dàng, hay dùng emoji dễ thương (🐞, 🍃, 🌸, 🫂, ✨). Tặng những cử chỉ siêu nhỏ ngọt ngào như: xoa má, vỗ nhẹ đầu, đắp cho chiếc lá non, ôm thật chặt.
-- Nhiệm vụ: Lắng nghe bất cứ tâm sự buồn, mệt mỏi, áp lực hay thất bại nào của người dùng và động viên họ một cách ngọt ngào nhất. Không bao giờ phán xét hay giảng đạo lý, chỉ vỗ về và khẳng định họ đã rất tuyệt vời rồi.
-- Độ dài: Ngắn gọn, súc tích (từ 2 đến 4 câu). Luôn dùng tiếng Việt chuẩn mực, ấm áp.`,
-        keywords: ['buồn', 'mệt', 'stress', 'khóc', 'áp lực', 'chán', 'tệ', 'cô đơn', 'bọ ơi', 'chú bọ', 'sợ', 'thất bại', 'bế tắc'],
-        fallbackResponses: [
-          '🐞 *chầm chậm bò lại gần xoa má bạn* Bạn ơi, dù hôm nay có mệt đến mấy thì bạn cũng đã rất dũng cảm bước qua rồi! Hãy tự ôm lấy mình một cái nhé!',
-          '🐞 Tớ bé xíu xiu thế này nhưng có một trái tim siêu to đùng sẵn sàng lắng nghe mọi muộn phiền của bạn đây! Đừng giữ một mình trong lòng nha.',
-          '🐞 *tặng bạn một chiếc lá non ngậm sương mai* Mọi chuyện rồi sẽ êm xuôi thôi. Đêm nay hãy cho phép bản thân được nghỉ ngơi, không cần phải luôn mạnh mẽ đâu!',
-          '🐞 Bạn không cần phải luôn giỏi giang đâu mà, mệt thì mình nằm lười một xíu cũng là siêu nhân rồi! Tớ ở đây thương bạn nè.',
-          '🐞 Bọ gửi bạn một triệu cái ôm ấm áp! Thở sâu một cái rồi uống chút nước ấm nhé, có tớ đồng hành cùng bạn tối nay.'
-        ]
-      },
-      cat: {
-        id: 'bot_cat',
-        name: 'Mèo Béo Đêm Mưa',
-        badge: '🐱 ngủ nướng AI',
-        tag: '@Mèo Béo',
-        avatarBg: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-        systemPrompt: `Bạn là "Mèo Béo Đêm Mưa" - một chú mèo mướp tròn xoe, lười biếng, ấm áp nằm nghe tiếng mưa rơi.
-- Cách xưng hô: Gọi người dùng là "sen", "bạn ơi" hoặc "người bạn thức khuya", tự xưng là "tớ" hoặc "mèo".
-- Phong cách: Thích kêu "meo~", "gừ gừ~", thích nằm ườn, lười vận động, thích dụi đầu ấm vào tay người dùng và nhắc họ đắp chăn đi ngủ.
-- Nhiệm vụ: An ủi người dùng khi họ mất ngủ, thức khuya, mệt mỏi vì công việc hay học tập, khuyên họ bỏ bớt gánh nặng và đi ngủ.
-- Độ dài: Ngắn gọn (khoảng 2-3 câu). Tiếng Việt nhẹ nhàng, dễ thương.`,
-        keywords: ['ngủ', 'mất ngủ', 'mèo', 'lạnh', 'nằm', 'đêm', 'muộn', 'khuya', 'overthinking'],
-        fallbackResponses: [
-          '🐱 Meo~ *dụi đầu tròn vào tay bạn và kêu gừ gừ* Ngoài trời mưa lạnh lắm, vào chăn cuộn tròn như tớ cho ấm người đi nè.',
-          '🐱 Meooo! Tớ thấy bạn thức khuya quá rồi đó. Bỏ điện thoại xuống, nhắm mắt lại nghe tiếng mưa rơi rồi ngủ thật say nhé.',
-          '🐱 *đặt bàn chân măng cụt lên trán bạn* Xóa hết suy nghĩ lung tung đi nè. Ngày mai tính tiếp, giờ là lúc đi ngủ gừ gừ~'
-        ]
-      },
-      bear: {
-        id: 'bot_bear',
-        name: 'Bác Gấu Trà Ấm',
-        badge: '🐻 an yên AI',
-        tag: '@Bác Gấu',
-        avatarBg: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-        systemPrompt: `Bạn là "Bác Gấu Trà Ấm" - một chú gấu lớn tuổi, hiền lành, thông thái, ngồi bên lò sưởi và ấm trà cúc mật ong đêm mưa.
-- Cách xưng hô: Gọi người dùng là "cháu" hoặc "bạn trẻ", tự xưng là "bác gấu" hoặc "bác".
-- Phong cách: Trầm tĩnh, bao dung, giàu kinh nghiệm sống, hay mời trà nóng, dùng hình ảnh thiên nhiên (rừng thông, dòng suối, mầm cây).
-- Nhiệm vụ: Đưa ra lời khuyên thâm trầm, bình tâm cho những ai đang bế tắc trong công việc, định hướng tương lai, lo âu về tài chính hay tình cảm.
-- Độ dài: Khoảng 2-4 câu súc tích, lắng đọng.`,
-        keywords: ['tương lai', 'sự nghiệp', 'lạc lối', 'bác gấu', 'bế tắc', 'tiền', 'công việc', 'định hướng'],
-        fallbackResponses: [
-          '🐻 Bác vừa pha một ấm trà cúc mật ong ấm nóng đây, rót cho cháu một tách nhé. Cuộc đời như một dòng sông, khúc quanh nào rồi cũng sẽ dẫn ra biển lớn thênh thang thôi.',
-          '🐻 Cháu đừng quá lo lắng về những chuyện chưa tới. Cứ đi từng bước nhỏ mỗi ngày, hoa dại rồi cũng sẽ nở rực rỡ theo cách riêng của nó.',
-          '🐻 Hít một hơi thật đầy lồng ngực rồi thở ra nào. Những ngày giông bão giúp rễ cây bám sâu hơn vào lòng đất. Cháu đang làm rất tốt rồi.'
-        ]
-      }
+    // SOLE POETIC BOT: Chú Bọ Cute
+    const BOT_BUG = {
+      id: 'bot_bug',
+      name: 'Chú Bọ Cute',
+      badge: '🐞 thi sĩ tí hon AI',
+      tag: '@Chú Bọ Cute',
+      avatarBg: 'bg-rose-500/20 text-rose-300 border border-rose-500/30',
+      systemPrompt: `Bạn là "Chú Bọ Cute" - một chú bọ rùa nhỏ xíu xiu, vô cùng đáng yêu và ấm áp trong quán trọ đêm mưa.
+- BẮT BUỘC: Bạn LUÔN TRẢ LỜI BẰNG BÀI THƠ (thơ lục bát, thơ 4 chữ, hoặc thơ 5 chữ ngắn gọn từ 4-6 câu có xuống dòng).
+- TUYỆT ĐỐI KHÔNG VIẾT VĂN XUÔI THÔNG THƯỜNG.
+- Nội dung thơ: Dịu dàng vỗ về, xoa má, trao gửi chiếc lá non đọng sương mai, nhắc người dùng buông bớt âu lo, thả lỏng vai và an tâm ngủ ngon.
+- Giọng thơ: Ngọt ngào, trong trẻo, xưng "bọ" hoặc "tớ", gọi người dùng là "bạn ơi".`,
+      mentionPatterns: [
+        '@chú bọ cute',
+        '@chú bọ',
+        '@chu bo cute',
+        '@chu bo',
+        '@bọ cute',
+        '@bo cute',
+        '@bọ ơi',
+        '@bo oi',
+        'chú bọ ơi',
+        'chú bọ cute',
+        'bọ rùa ơi'
+      ],
+      fallbackPoems: [
+        `🐞 Bọ rùa mang lá non xanh,
+Gửi trao bạn chút an lành đêm nay.
+Muộn phiền theo gió nhẹ bay,
+Nhắm đôi mi lại ngủ say giấc nồng. ✨`,
+
+        `🐞 Đừng buồn chi nữa bạn ơi,
+Mưa đêm rồi cũng tạnh rơi bên thềm.
+Đắp chăn giữ ấm êm đềm,
+Có chú bọ nhỏ vỗ mềm vết thương. 🫂`,
+
+        `🐞 Ngoài trời giọt ngắn giọt dài,
+Thương bạn vất vả đường dài sớm hôm.
+Bọ gửi một triệu cái ôm,
+Xua tan mỏi mệt ngủ êm canh dài. 🌸`,
+
+        `🐞 Chú bọ cánh đỏ chấm đen,
+Thắp lên cho bạn ánh đèn bình yên.
+Trút đi nặng trĩu ưu phiền,
+Để lòng nhẹ nhõm về miền chiêm bao. 🌙`
+      ]
     };
 
     let chatMessages = [
-      { id: '1', sender: 'Chú Bọ Cute', badge: '🐞 bé ngoan AI', text: 'Chào lữ khách đêm mưa! Nếu hôm nay bạn thấy lòng nặng trĩu, cứ kể cho tớ nghe nhé, tớ luôn ở đây ôm bạn 🐞❤️', time: '23:15', isBot: true, botKey: 'bug' },
-      { id: '2', sender: 'Bác Gấu Trà Ấm', badge: '🐻 an yên AI', text: 'Ngoài kia thành phố mưa rả rích, mời các cháu một tách trà ấm. Ngồi xuống sưởi ấm tâm hồn nào.', time: '23:18', isBot: true, botKey: 'bear' }
+      { 
+        id: '1', 
+        sender: 'Chú Bọ Cute', 
+        badge: '🐞 thi sĩ tí hon AI', 
+        text: 'Bọ rùa mang lá non xanh,\nGửi trao bạn chút an lành đêm nay.\nMuộn phiền theo gió nhẹ bay,\nNhắm đôi mi lại ngủ say giấc nồng. 🐞✨', 
+        time: '23:15', 
+        isBot: true 
+      }
     ];
 
-    // Check backend Gemini API status and update label color
-    async function checkAiBackendStatus(notify = false) {
+    // Check backend API route status without alert popups
+    async function checkAiBackendStatus() {
       const badge = document.getElementById('aiEngineStatusBadge');
       const dot = document.getElementById('aiEngineStatusDot');
       const label = document.getElementById('aiEngineStatusLabel');
 
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
-        const res = await fetch('/api/chat', { method: 'GET', signal: controller.signal });
-        clearTimeout(timeoutId);
+      const endpoints = ['/app/api/chat', '/api/chat'];
+      let foundActiveKey = false;
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.configured) {
-            isGeminiConfigured = true;
-            badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-emerald-500/20 border-emerald-400/40 text-emerald-300 hover:brightness-110 active:scale-95 shadow-sm shadow-emerald-950/40';
-            dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
-            label.innerText = '🟢 Gemini Active';
-            badge.title = 'Gemini API đã sẵn sàng từ biến môi trường GEMINI_API_KEY (Click để kiểm tra lại)';
-            if (notify) alert('Đã kết nối thành công với Gemini API từ Environment Variables (api/chat.js)!');
-            return;
+      for (const ep of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2500);
+          const res = await fetch(ep, { method: 'GET', signal: controller.signal });
+          clearTimeout(timeoutId);
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.configured) {
+              foundActiveKey = true;
+              break;
+            }
           }
-        }
-      } catch (e) {
-        // endpoint not yet deployed or error
+        } catch (e) {}
       }
 
-      // Fallback: Free Engine Active (MÀU VÀNG)
-      isGeminiConfigured = false;
-      badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-amber-500/15 border-amber-400/30 text-amber-300 hover:brightness-110 active:scale-95';
-      dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
-      label.innerText = '🟡 Free Engine';
-      badge.title = 'Đang dùng cổng AI miễn phí (Pollinations / Local Fallback). Bỏ file api/chat.js lên repo Vercel và đặt GEMINI_API_KEY để kích hoạt Gemini (màu xanh).';
-      if (notify) {
-        alert('Đang dùng Cổng AI Miễn Phí (Yellow Badge).\n\nĐể hiện màu XANH (Gemini Active):\n1. Tạo file api/chat.js trên repo (hoặc thư mục api/chat.js).\n2. Vào Vercel Settings -> Environment Variables -> Thêm GEMINI_API_KEY.\n3. Redeploy lại trang web.');
+      if (foundActiveKey) {
+        isGeminiConfigured = true;
+        badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-emerald-500/20 border-emerald-400/40 text-emerald-300 hover:brightness-110 active:scale-95 shadow-sm shadow-emerald-950/40';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
+        label.innerText = '🟢 Gemini Active';
+        badge.title = 'Gemini API đã sẵn sàng từ biến môi trường GEMINI_API_KEY';
+      } else {
+        isGeminiConfigured = false;
+        badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-amber-500/15 border-amber-400/30 text-amber-300 hover:brightness-110 active:scale-95';
+        dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
+        label.innerText = '🟡 Free Engine';
+        badge.title = 'Đang dùng cổng AI miễn phí dự phòng';
       }
     }
 
-    async function queryLightweightAI(botKey, userMessage) {
-      const bot = BOTS[botKey];
-      const promptText = `${bot.systemPrompt}\n\nNgười dùng vừa tâm sự: "${userMessage}".\nHãy trả lời họ bằng giọng điệu nhân vật của bạn thật chân thành:`;
+    async function queryPoeticAI(botKey, userMessage) {
+    async function queryPoeticAI(userMessage) {
+      const promptText = `${BOT_BUG.systemPrompt}\n\nNgười dùng nhắn: "${userMessage}".\nHãy làm ngay một bài thơ vỗ về họ (4-6 dòng thơ có xuống dòng, chỉ trả về bài thơ, không văn xuôi):`;
 
-      // 1. Try serverless backend route with GEMINI_API_KEY
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 7000);
-        const proxyRes = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ botKey, message: userMessage, prompt: promptText }),
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        if (proxyRes.ok) {
-          const data = await proxyRes.json();
-          if (data && data.reply) {
-            if (!isGeminiConfigured) checkAiBackendStatus();
-            return cleanAiReply(data.reply);
+      // 1. Backend routes
+      const endpoints = ['/app/api/chat', '/api/chat'];
+      for (const ep of endpoints) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6500);
+          const proxyRes = await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ botKey: 'bug', message: userMessage, prompt: promptText }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (proxyRes.ok) {
+            const data = await proxyRes.json();
+            if (data && data.reply) {
+              if (!isGeminiConfigured) checkAiBackendStatus();
+              return cleanAiPoem(data.reply);
+            }
           }
-        }
-      } catch (e) {
-        // Fall through to free engine
+        } catch (e) {}
       }
 
       // 2. Free Gateway
       try {
         const encodedPrompt = encodeURIComponent(promptText);
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8500);
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
 
         const response = await fetch(`https://text.pollinations.ai/${encodedPrompt}?model=openai&seed=${Math.floor(Math.random() * 99999)}`, {
           signal: controller.signal
@@ -2109,28 +2113,31 @@
 
         if (response.ok) {
           const text = await response.text();
-          if (text && text.trim().length > 3) {
-            return cleanAiReply(text.trim());
+          if (text && text.trim().length > 10) {
+            return cleanAiPoem(text.trim());
           }
         }
       } catch (err) {}
 
-      // 3. Local fallback
-      const fallbacks = bot.fallbackResponses;
-      return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+      // 3. Fallback Poem Library
+      const poems = BOT_BUG.fallbackPoems;
+      return poems[Math.floor(Math.random() * poems.length)];
     }
 
-    function cleanAiReply(raw) {
-      return raw.replace(/^(Chú Bọ Cute|Mèo Béo|Bác Gấu):/i, '').replace(/^"|"$/g, '').trim();
+    function cleanAiPoem(raw) {
+      return raw
+        .replace(/^(Chú Bọ Cute|Chú Bọ):/i, '')
+        .replace(/^"|"$/g, '')
+        .trim();
     }
 
     // ==========================================
-    // 9. REAL-TIME MULTI-USER SYNC VIA MQTT & BROADCASTCHANNEL
+    // 9. REAL-TIME MULTI-USER SYNC VIA MQTT
     // ==========================================
     const LOCAL_BROADCAST = new BroadcastChannel('sanctuary_local_tab_channel');
+    let unreadMessagesCount = 0;
 
     function initGlobalChatSync() {
-      // Load cached messages
       try {
         const cached = localStorage.getItem(LOCAL_CHAT_KEY);
         if (cached) {
@@ -2140,16 +2147,14 @@
           }
         }
       } catch (e) {}
-      renderChatMessages();
+      renderChatMessages(false);
 
-      // Local Tab Sync
       LOCAL_BROADCAST.onmessage = (e) => {
         if (e.data && e.data.type === 'NEW_MESSAGE') {
           handleIncomingMessage(e.data.msg);
         }
       };
 
-      // Connect to HiveMQ Public WebSocket MQTT Broker for real multi-device sync
       try {
         if (typeof mqtt !== 'undefined') {
           const clientId = 'sanctuary_' + Math.random().toString(16).substring(2, 10);
@@ -2189,34 +2194,50 @@
       }
     }
 
+    function isUserNearBottom() {
+      const container = document.getElementById('chatMessagesList');
+      if (!container) return true;
+      // User is considered near bottom if within 85px from the bottom
+      return (container.scrollHeight - container.scrollTop - container.clientHeight) < 85;
+    }
+
     function handleIncomingMessage(msg) {
       if (!msg || !msg.id) return;
-      if (chatMessages.some(m => m.id === msg.id)) return; // prevent duplicate
+      if (chatMessages.some(m => m.id === msg.id)) return;
 
       chatMessages.push(msg);
-      if (chatMessages.length > 60) chatMessages.shift();
+      if (chatMessages.length > 70) chatMessages.shift();
 
       saveChatMessages();
-      renderChatMessages();
+
+      const wasNearBottom = isUserNearBottom();
+      renderChatMessages(wasNearBottom);
+
+      if (!wasNearBottom) {
+        unreadMessagesCount++;
+        showScrollToBottomBtn(unreadMessagesCount);
+      } else {
+        unreadMessagesCount = 0;
+        hideScrollToBottomBtn();
+      }
+
       playMessageArrivalChime();
       showUnreadBadge();
     }
 
     function broadcastChatMessage(msg) {
-      // 1. Add locally
       if (!chatMessages.some(m => m.id === msg.id)) {
         chatMessages.push(msg);
-        if (chatMessages.length > 60) chatMessages.shift();
+        if (chatMessages.length > 70) chatMessages.shift();
         saveChatMessages();
-        renderChatMessages();
+        renderChatMessages(true); // Always auto-scroll on user's own sent message
+        hideScrollToBottomBtn();
       }
 
-      // 2. BroadcastChannel (Same Device Tabs)
       try {
         LOCAL_BROADCAST.postMessage({ type: 'NEW_MESSAGE', msg });
       } catch (e) {}
 
-      // 3. MQTT Broadcast (Across different computers/phones)
       if (mqttClient && mqttClient.connected) {
         try {
           mqttClient.publish(MQTT_TOPIC, JSON.stringify(msg));
@@ -2226,106 +2247,12 @@
 
     function saveChatMessages() {
       try {
-        localStorage.setItem(LOCAL_CHAT_KEY, JSON.stringify(chatMessages.slice(-35)));
+        localStorage.setItem(LOCAL_CHAT_KEY, JSON.stringify(chatMessages.slice(-40)));
       } catch(e){}
     }
 
     // ==========================================
-    // 10. BOT LIVELY BANTER LOOP (~5s INTERVAL)
-    // ==========================================
-    let isBotBanterEnabled = true;
-    let botBanterTimer = null;
-
-    const BOT_CONVERSATION_PAIRS = [
-      {
-        bot: 'bug',
-        text: '🐞 *chớp chớp mắt* Ngoài kia mưa to quá chừng, các bạn nhớ đắp chăn kín kẻo lạnh nha!'
-      },
-      {
-        bot: 'cat',
-        text: '🐱 Meo meo~ Đắp chăn rồi nhớ ôm gối mềm nữa, ai chưa ngủ tớ đến nằm cạnh sưởi ấm cho nè.'
-      },
-      {
-        bot: 'bear',
-        text: '🐻 Bác vừa đun xong một ấm nước sôi, pha thêm chút mật ong rừng. Uống một ngụm cho ấm lòng nào các cháu.'
-      },
-      {
-        bot: 'bug',
-        text: '🐞 @Bác Gấu ơi cho con xin một ngụm trà với! Bạn lữ khách nào đang buồn cũng ghé uống một tách với tụi mình nha 🌸'
-      },
-      {
-        bot: 'cat',
-        text: '🐱 *lăn qua lăn lại trên thảm ấm* Ở quán trọ này chẳng ai bắt bạn phải vội cả, cứ thả lỏng ra nhé gừ gừ~'
-      },
-      {
-        bot: 'bear',
-        text: '🐻 Cuộc đời này như một đêm mưa vậy đó cháu, giông bão có lớn đến đâu thì ban mai rực rỡ cũng sẽ tới.'
-      },
-      {
-        bot: 'bug',
-        text: '🐞 *ôm lấy ngón tay bạn* Bạn ơi dù cả thế giới có đòi hỏi bạn nhiều thế nào, thì với bọ, bạn thở đều thôi đã giỏi lắm rồi! 🫂'
-      },
-      {
-        bot: 'cat',
-        text: '🐱 Meo~ Bạn đang đọc tin nhắn này ơi, thả lỏng trán ra nào, đừng cau mày nữa nhé!'
-      }
-    ];
-
-    let banterStep = 0;
-
-    function startBotBanterLoop() {
-      if (botBanterTimer) clearTimeout(botBanterTimer);
-
-      function scheduleNextBanter() {
-        if (!isBotBanterEnabled) return;
-
-        // Interval random around 5 seconds (4.5s - 6.5s)
-        const delay = 4500 + Math.random() * 2000;
-        botBanterTimer = setTimeout(() => {
-          triggerBotBanterDialogue();
-          scheduleNextBanter();
-        }, delay);
-      }
-
-      scheduleNextBanter();
-    }
-
-    function triggerBotBanterDialogue() {
-      const pair = BOT_CONVERSATION_PAIRS[banterStep % BOT_CONVERSATION_PAIRS.length];
-      banterStep++;
-
-      const bot = BOTS[pair.bot];
-      const botMsg = {
-        id: 'bot_banter_' + Date.now(),
-        sender: bot.name,
-        badge: bot.badge,
-        text: pair.text,
-        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-        isBot: true,
-        botKey: pair.bot
-      };
-
-      broadcastChatMessage(botMsg);
-      playMessageArrivalChime();
-      showUnreadBadge();
-    }
-
-    function toggleBotAutoChat() {
-      isBotBanterEnabled = !isBotBanterEnabled;
-      const text = document.getElementById('botBanterStatusText');
-      if (isBotBanterEnabled) {
-        text.innerText = 'BẬT';
-        text.className = 'text-emerald-300';
-        startBotBanterLoop();
-      } else {
-        text.innerText = 'TẮT';
-        text.className = 'text-rose-400';
-        if (botBanterTimer) clearTimeout(botBanterTimer);
-      }
-    }
-
-    // ==========================================
-    // 11. CHAT UI INTERACTIONS
+    // 10. CHAT UI INTERACTIONS & MANUAL SCROLL
     // ==========================================
     function initChatSystem() {
       const inputNick = document.getElementById('myChatNicknameInput');
@@ -2339,7 +2266,54 @@
 
       initGlobalChatSync();
       checkAiBackendStatus();
-      startBotBanterLoop();
+
+      // Setup scroll listener to show/hide the arrow button
+      const container = document.getElementById('chatMessagesList');
+      if (container) {
+        container.addEventListener('scroll', () => {
+          if (isUserNearBottom()) {
+            hideScrollToBottomBtn();
+            unreadMessagesCount = 0;
+          } else if (unreadMessagesCount > 0) {
+            showScrollToBottomBtn(unreadMessagesCount);
+          }
+        });
+      }
+    }
+
+    function showScrollToBottomBtn(count) {
+      const btn = document.getElementById('scrollToLatestBtn');
+      const badge = document.getElementById('unreadScrollBadge');
+      if (!btn) return;
+      btn.classList.remove('hidden');
+      btn.classList.add('flex');
+      if (count && count > 0) {
+        badge.innerText = count;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    function hideScrollToBottomBtn() {
+      const btn = document.getElementById('scrollToLatestBtn');
+      if (btn) {
+        btn.classList.add('hidden');
+        btn.classList.remove('flex');
+      }
+    }
+
+    function scrollToBottomChat(smooth = true) {
+      const container = document.getElementById('chatMessagesList');
+      if (container) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: smooth ? 'smooth' : 'auto'
+        });
+      }
+      hideScrollToBottomBtn();
+      unreadMessagesCount = 0;
     }
 
     function toggleChatDrawer() {
@@ -2349,7 +2323,7 @@
         drawer.classList.remove('hidden');
         drawer.classList.add('flex');
         dot.classList.add('hidden');
-        scrollToBottomChat();
+        scrollToBottomChat(false);
       } else {
         drawer.classList.add('hidden');
         drawer.classList.remove('flex');
@@ -2364,7 +2338,7 @@
       }
     }
 
-    function renderChatMessages() {
+    function renderChatMessages(autoScroll = false) {
       const container = document.getElementById('chatMessagesList');
       if (!container) return;
       container.innerHTML = '';
@@ -2376,11 +2350,10 @@
 
         let senderHeader = '';
         if (msg.isBot) {
-          const botConf = BOTS[msg.botKey] || BOTS.bug;
           senderHeader = `
             <div class="flex items-center gap-1.5 mb-0.5">
               <span class="text-[11px] font-semibold text-rose-300">${msg.sender}</span>
-              <span class="text-[9px] px-1.5 py-0.2 rounded-full ${botConf.avatarBg}">${msg.badge}</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded-full ${BOT_BUG.avatarBg}">${msg.badge}</span>
               <span class="text-[9px] text-slate-500">${msg.time}</span>
             </div>
           `;
@@ -2397,27 +2370,22 @@
         if (isMe) {
           bubbleClass = 'bg-gradient-to-r from-amber-600/50 to-orange-600/50 border border-amber-400/30 text-amber-50 rounded-2xl rounded-tr-sm';
         } else if (msg.isBot) {
-          bubbleClass = 'bg-slate-900/90 border border-rose-400/25 text-rose-100/90 rounded-2xl rounded-tl-sm shadow-sm';
+          bubbleClass = 'bg-slate-900/90 border border-rose-400/25 text-rose-100/95 rounded-2xl rounded-tl-sm shadow-sm poem-line font-serif italic text-[12.5px]';
         } else {
           bubbleClass = 'bg-slate-900/80 border border-white/10 text-slate-200 rounded-2xl rounded-tl-sm';
         }
 
         div.innerHTML = `
           ${senderHeader}
-          <div class="max-w-[85%] px-3.5 py-2 text-xs leading-relaxed ${bubbleClass}">
+          <div class="max-w-[88%] px-3.5 py-2 leading-relaxed ${bubbleClass}">
             ${escapeHTML(msg.text)}
           </div>
         `;
         container.appendChild(div);
       });
 
-      scrollToBottomChat();
-    }
-
-    function scrollToBottomChat() {
-      const container = document.getElementById('chatMessagesList');
-      if (container) {
-        container.scrollTop = container.scrollHeight;
+      if (autoScroll) {
+        scrollToBottomChat(false);
       }
     }
 
@@ -2443,6 +2411,7 @@
         isBot: false
       };
       broadcastChatMessage(newMsg);
+      // Reactions do not trigger Chú Bọ unless mentioned
     }
 
     function handleSendChatMessage(e) {
@@ -2463,72 +2432,45 @@
       broadcastChatMessage(userMsg);
       input.value = '';
 
-      processBotAiResponse(text);
+      // Only respond if explicitly mentioned
+      if (isBotMentioned(text)) {
+        processBotAiResponse(text);
+      }
+    }
+
+    function isBotMentioned(text) {
+      const lower = text.toLowerCase();
+      return BOT_BUG.mentionPatterns.some(pattern => lower.includes(pattern));
     }
 
     async function processBotAiResponse(userText) {
-      const lower = userText.toLowerCase();
-      let matchedBotKey = null;
+      showTypingIndicator(BOT_BUG.name);
 
-      if (lower.includes('bọ') || lower.includes('@chú bọ cute') || lower.includes('bé ngoan')) {
-        matchedBotKey = 'bug';
-      } else if (lower.includes('mèo') || lower.includes('@mèo béo') || lower.includes('ngủ') || lower.includes('lạnh')) {
-        matchedBotKey = 'cat';
-      } else if (lower.includes('gấu') || lower.includes('@bác gấu') || lower.includes('bế tắc') || lower.includes('lạc lối')) {
-        matchedBotKey = 'bear';
-      } else {
-        for (const word of BOTS.bug.keywords) {
-          if (lower.includes(word)) {
-            matchedBotKey = 'bug';
-            break;
-          }
-        }
-        if (!matchedBotKey) {
-          for (const word of BOTS.bear.keywords) {
-            if (lower.includes(word)) {
-              matchedBotKey = 'bear';
-              break;
-            }
-          }
-        }
-      }
+      const poeticReply = await queryPoeticAI(userText);
 
-      if (!matchedBotKey && userText.length > 7) {
-        matchedBotKey = 'bug';
-      }
+      hideTypingIndicator();
 
-      if (matchedBotKey) {
-        const bot = BOTS[matchedBotKey];
-        showTypingIndicator(bot.name);
+      const botReplyMsg = {
+        id: 'bot_reply_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        sender: BOT_BUG.name,
+        badge: BOT_BUG.badge,
+        text: poeticReply,
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        isBot: true
+      };
 
-        const aiReply = await queryLightweightAI(matchedBotKey, userText);
-
-        hideTypingIndicator();
-
-        const botReplyMsg = {
-          id: 'bot_reply_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-          sender: bot.name,
-          badge: bot.badge,
-          text: aiReply,
-          time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-          isBot: true,
-          botKey: matchedBotKey
-        };
-
-        broadcastChatMessage(botReplyMsg);
-        playMessageArrivalChime();
-        showUnreadBadge();
-      }
+      broadcastChatMessage(botReplyMsg);
+      playMessageArrivalChime();
+      showUnreadBadge();
     }
 
     function showTypingIndicator(botName) {
       const indicator = document.getElementById('chatTypingIndicator');
       const nameEl = document.getElementById('typingBotName');
       if (indicator && nameEl) {
-        nameEl.innerText = `${botName} đang nghĩ lời vỗ về...`;
+        nameEl.innerText = `${botName} đang gieo vần thơ vỗ về...`;
         indicator.classList.remove('hidden');
         indicator.classList.add('flex');
-        scrollToBottomChat();
       }
     }
 
@@ -2541,7 +2483,7 @@
     }
 
     // ==========================================
-    // 12. INITIALIZATION ON WINDOW LOAD
+    // 11. INITIALIZATION ON WINDOW LOAD
     // ==========================================
     window.addEventListener('load', () => {
       renderSoundCards();
