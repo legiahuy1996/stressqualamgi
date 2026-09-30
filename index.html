@@ -626,24 +626,28 @@
 
     let chatMessages = [...DEFAULT_HISTORY];
 
-    function checkAiBackendStatus() {
+    async function checkAiBackendStatus() {
       const badge = document.getElementById('aiEngineStatusBadge');
       const dot = document.getElementById('aiEngineStatusDot');
       const label = document.getElementById('aiEngineStatusLabel');
       if (!badge || !dot || !label) return;
 
-      const isAvailable = typeof window.queryPoeticAI === 'function' ||
-                          typeof window.generateChatReply === 'function' ||
-                          typeof window.chatHandler === 'function' ||
-                          window.CHAT_JS_LOADED === true ||
-                          typeof window.geminiChat === 'function';
+      // Nguồn sự thật duy nhất: hỏi thẳng serverless /api/chat xem Gemini đã cấu hình chưa
+      let isAvailable = false;
+      try {
+        const res = await fetch('/api/chat', { method: 'GET' });
+        if (res.ok) {
+          const data = await res.json();
+          isAvailable = Boolean(data && data.configured);
+        }
+      } catch (e) {}
 
       if (isAvailable) {
         isGeminiReady = true;
         badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-emerald-500/20 border-emerald-400/40 text-emerald-300 hover:brightness-110 active:scale-95 shadow-sm shadow-emerald-950/40';
         dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse';
         label.innerText = '🟢 Gemini Active';
-        badge.title = 'Trí tuệ nhân tạo Gemini sẵn sàng qua chat.js';
+        badge.title = 'Trí tuệ nhân tạo Gemini sẵn sàng qua /api/chat';
       } else {
         isGeminiReady = false;
         badge.className = 'cursor-pointer text-[9px] px-2 py-0.5 rounded-full border font-mono transition flex items-center gap-1 bg-amber-500/15 border-amber-400/30 text-amber-300 hover:brightness-110 active:scale-95';
@@ -656,32 +660,19 @@
     async function queryPoeticAI(userMessage) {
       const promptText = `${BOT_BUG.systemPrompt}\n\nNgười dùng nhắn: "${userMessage}".\nHãy làm ngay một bài thơ vỗ về họ (4-6 dòng thơ có xuống dòng, chỉ trả về bài thơ, không văn xuôi):`;
 
+      // Ưu tiên gọi thẳng serverless /api/chat (Gemini) trước khi rơi xuống các phương án dự phòng
       try {
-        if (typeof window.queryPoeticAI === 'function') {
-          const res = await window.queryPoeticAI(userMessage, promptText);
-          if (res) return cleanAiPoem(res);
-        } else if (typeof window.generateChatReply === 'function') {
-          const res = await window.generateChatReply({ message: userMessage, prompt: promptText });
-          if (res) return cleanAiPoem(res);
-        } else if (typeof window.geminiChat === 'function') {
-          const res = await window.geminiChat(userMessage, promptText);
-          if (res) return cleanAiPoem(res);
-        } else if (typeof window.chatHandler === 'function') {
-          const mockReq = { body: { message: userMessage, prompt: promptText } };
-          let resData = null;
-          const mockRes = {
-            status: () => mockRes,
-            json: (data) => { resData = data; return mockRes; },
-            setHeader: () => mockRes,
-            end: () => mockRes
-          };
-          await window.chatHandler(mockReq, mockRes);
-          if (resData && (resData.reply || resData.message)) {
-            return cleanAiPoem(resData.reply || resData.message);
-          }
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: userMessage })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.reply) return cleanAiPoem(data.reply);
         }
       } catch (e) {
-        console.warn('Lỗi khi gọi qua chat.js:', e);
+        console.warn('Lỗi khi gọi /api/chat:', e);
       }
 
       try {
@@ -1120,14 +1111,14 @@
     let isMasterPlaying = false;
 
     const SOUND_TRACKS = [
-      { id: 'rain', name: 'Mưa Rơi Mái Hiên', icon: 'cloud-rain', volume: 0.70, node: null },
-      { id: 'river', name: 'Dòng Suối Tĩnh Lặng', icon: 'droplets', volume: 0.65, node: null },
-      { id: 'lofi', name: 'Lofi Jazz Ấm Áp', icon: 'music', volume: 0.60, node: null },
-      { id: 'fire', name: 'Lửa Trại Lách Tách', icon: 'flame', volume: 0.70, node: null },
-      { id: 'ocean', name: 'Sóng Biển Về Đêm', icon: 'waves', volume: 0.65, node: null },
-      { id: 'wind', name: 'Gió Qua Đồi Thông', icon: 'wind', volume: 0.40, node: null },
-      { id: 'chimes', name: 'Chuông Gió Pha Lê', icon: 'bell', volume: 0.45, node: null },
-      { id: 'keyboard', name: 'Gõ Phím Lách Cách', icon: 'keyboard', volume: 0.35, node: null },
+      { id: 'rain', name: 'Mưa Rơi Mái Hiên', icon: 'cloud-rain', volume: 0.70, enabled: true, node: null },
+      { id: 'river', name: 'Dòng Suối Tĩnh Lặng', icon: 'droplets', volume: 0.65, enabled: false, node: null },
+      { id: 'lofi', name: 'Lofi Jazz Ấm Áp', icon: 'music', volume: 0.60, enabled: false, node: null },
+      { id: 'fire', name: 'Lửa Trại Lách Tách', icon: 'flame', volume: 0.70, enabled: false, node: null },
+      { id: 'ocean', name: 'Sóng Biển Về Đêm', icon: 'waves', volume: 0.65, enabled: false, node: null },
+      { id: 'wind', name: 'Gió Qua Đồi Thông', icon: 'wind', volume: 0.40, enabled: false, node: null },
+      { id: 'chimes', name: 'Chuông Gió Pha Lê', icon: 'bell', volume: 0.45, enabled: false, node: null },
+      { id: 'keyboard', name: 'Gõ Phím Lách Cách', icon: 'keyboard', volume: 0.35, enabled: false, node: null },
     ];
 
     function initAudioContext() {
@@ -1444,29 +1435,70 @@
       } catch(e){}
     }
 
+    // Tra cứu hàm tạo node theo id, dùng chung cho cả khởi động master lẫn bật/tắt từng âm riêng lẻ
+    function createTrackInstance(track) {
+      if (track.id === 'rain') return createRainNode();
+      if (track.id === 'river') return createRiverNode();
+      if (track.id === 'fire') return createFireNode();
+      if (track.id === 'ocean') return createOceanNode();
+      if (track.id === 'wind') return createWindNode();
+      if (track.id === 'chimes') return createChimesNode();
+      if (track.id === 'lofi') return createLofiNode();
+      if (track.id === 'keyboard') return createKeyboardNode();
+      return null;
+    }
+
+    function ensureTrackGainNode(track) {
+      if (!track.gainNode && audioCtx) {
+        track.gainNode = audioCtx.createGain();
+        track.gainNode.gain.setValueAtTime(track.volume, audioCtx.currentTime);
+        track.gainNode.connect(masterGain);
+      }
+    }
+
+    // Khởi động riêng một track khi đang phát nhạc nền, không đụng đến các track khác
+    function startTrackLive(track) {
+      if (!isMasterPlaying || !audioCtx || track.activeInstance) return;
+      ensureTrackGainNode(track);
+      const inst = createTrackInstance(track);
+      if (inst) {
+        inst.input.connect(track.gainNode);
+        track.activeInstance = inst;
+      }
+    }
+
+    function stopTrackLive(track) {
+      if (track.activeInstance) {
+        track.activeInstance.stop();
+        track.activeInstance = null;
+      }
+    }
+
+    function setTrackEnabled(track, enabled) {
+      track.enabled = enabled;
+      if (isMasterPlaying) {
+        if (enabled) startTrackLive(track); else stopTrackLive(track);
+      }
+    }
+
+    function toggleTrackEnabled(id) {
+      const track = SOUND_TRACKS.find(t => t.id === id);
+      if (!track) return;
+      setTrackEnabled(track, !track.enabled);
+      updateSoundCardUI();
+    }
+
     function setupSoundTrackNodes() {
       if (!audioCtx) return;
       SOUND_TRACKS.forEach(track => {
-        if (!track.gainNode) {
-          track.gainNode = audioCtx.createGain();
-          track.gainNode.gain.setValueAtTime(track.volume, audioCtx.currentTime);
-          track.gainNode.connect(masterGain);
-        }
+        ensureTrackGainNode(track);
         if (track.activeInstance) {
           track.activeInstance.stop();
           track.activeInstance = null;
         }
+        if (!track.enabled) return;
 
-        let inst = null;
-        if (track.id === 'rain') inst = createRainNode();
-        else if (track.id === 'river') inst = createRiverNode();
-        else if (track.id === 'fire') inst = createFireNode();
-        else if (track.id === 'ocean') inst = createOceanNode();
-        else if (track.id === 'wind') inst = createWindNode();
-        else if (track.id === 'chimes') inst = createChimesNode();
-        else if (track.id === 'lofi') inst = createLofiNode();
-        else if (track.id === 'keyboard') inst = createKeyboardNode();
-
+        const inst = createTrackInstance(track);
         if (inst) {
           inst.input.connect(track.gainNode);
           track.activeInstance = inst;
@@ -1517,6 +1549,7 @@
       container.innerHTML = '';
       SOUND_TRACKS.forEach(track => {
         const card = document.createElement('div');
+        card.id = `sound-card-${track.id}`;
         card.className = 'glass-panel p-4 rounded-2xl flex items-center justify-between gap-4 transition-all hover:border-amber-400/30';
         card.innerHTML = `
           <div class="flex items-center gap-3">
@@ -1532,17 +1565,38 @@
             <input type="range" min="0" max="1" step="0.01" value="${track.volume}" 
               oninput="updateTrackVolume('${track.id}', this.value)" 
               class="w-24 sm:w-28 h-1.5 custom-slider bg-slate-800 rounded-lg cursor-pointer">
+            <button id="toggle-btn-${track.id}" onclick="toggleTrackEnabled('${track.id}')" title="Bật/tắt âm thanh này"
+              class="w-8 h-8 rounded-lg flex items-center justify-center border transition active:scale-95 shrink-0">
+              <i data-lucide="power" class="w-3.5 h-3.5"></i>
+            </button>
           </div>
         `;
         container.appendChild(card);
       });
       if (window.lucide) lucide.createIcons();
+      updateSoundCardUI();
+    }
+
+    function applyTrackToggleVisual(track) {
+      const card = document.getElementById(`sound-card-${track.id}`);
+      const btn = document.getElementById(`toggle-btn-${track.id}`);
+      if (card) {
+        card.classList.toggle('ring-1', track.enabled);
+        card.classList.toggle('ring-amber-400/40', track.enabled);
+        card.classList.toggle('opacity-60', !track.enabled);
+      }
+      if (btn) {
+        btn.className = track.enabled
+          ? 'w-8 h-8 rounded-lg flex items-center justify-center border transition active:scale-95 shrink-0 bg-amber-500/25 border-amber-400/50 text-amber-300'
+          : 'w-8 h-8 rounded-lg flex items-center justify-center border transition active:scale-95 shrink-0 bg-slate-800/60 border-white/10 text-slate-500';
+      }
     }
 
     function updateSoundCardUI() {
       SOUND_TRACKS.forEach(track => {
         const valElem = document.getElementById(`vol-val-${track.id}`);
         if (valElem) valElem.innerText = Math.round(track.volume * 100) + '%';
+        applyTrackToggleVisual(track);
       });
     }
 
@@ -1598,11 +1652,16 @@
 
     function setTrackVol(id, val) {
       const track = SOUND_TRACKS.find(t => t.id === id);
-      if (track) {
-        track.volume = val;
-        if (track.gainNode && audioCtx) {
-          track.gainNode.gain.setValueAtTime(val, audioCtx.currentTime);
-        }
+      if (!track) return;
+
+      track.volume = val;
+      if (track.gainNode && audioCtx) {
+        track.gainNode.gain.setValueAtTime(val, audioCtx.currentTime);
+      }
+
+      const shouldEnable = val > 0;
+      if (shouldEnable !== track.enabled) {
+        setTrackEnabled(track, shouldEnable);
       }
     }
 
